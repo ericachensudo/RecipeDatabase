@@ -3,12 +3,16 @@
 {% block content %}
 
 <body>
-  <h2>Recipe of the Week</h2>
+  <h2>My Collection</h2>
   <ul class="recipe_list">
     {% for n in dish %}
     <li><a href="/view/{{n.dish_id}}">{{n.dish_name}}</a></li>
     {% endfor %}
   </ul>
+
+<form method="POST" action="/add">
+<p>Name of new computer scientist: <input type="text" name="name"> <input type="submit" value="Add"></p>
+</form>
 
 </body>
 </html>

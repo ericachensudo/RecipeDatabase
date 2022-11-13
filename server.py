@@ -190,8 +190,9 @@ def sort_result(sorting=None):
 @app.route('/view/<id>')
 def view(id=None):
   infos = dict()
-  cursor = g.conn.execute("SELECT dish_name, prep_time, is_spicy, instructions FROM Recipe WHERE dish_id='"+id+"'") 
+  cursor = g.conn.execute("SELECT * FROM Recipe WHERE dish_id='"+id+"'") 
   content = cursor.fetchone()
+  infos['dish_id'] = content['dish_id']
   infos['dish_name'] = content['dish_name']
   infos['prep_time'] = content['prep_time']
   is_spicy = content['is_spicy']
@@ -277,7 +278,7 @@ def login():
   if content:
     user['id'] = content['user_id']
     user['name'] = content['user_name']
-    return redirect("/")
+    return redirect("/collection/"+user['id'])
   else:
     error_msg = "Incorrect user id and password combination."
     error = dict(error=error_msg)
@@ -287,7 +288,32 @@ def login():
 def login_page():
   global user
   return render_template("login.html")
-  
+
+@app.route('/tocollection')
+def tocollection():
+  global user
+  userid = user['id']
+  return redirect("/collection/"+user['id'])
+
+@app.route('/collection/<userid>')
+def collection(userid=None):
+  cursor = g.conn.execute("SELECT R.dish_id, R.dish_name FROM Recipe R, Likes L, Users U WHERE L.user_id=U.user_id AND R.dish_id=L.dish_id AND U.user_id='"+userid+"'")
+  dishes = []
+  for result in cursor:
+    temp = dict()
+    temp['dish_id'] = result['dish_id']
+    temp['dish_name'] = result['dish_name']
+    dishes.append(temp)
+  cursor.close()
+  dish = dict(dish = dishes)
+  return render_template("collection.html", **dish)
+
+@app.route('/like', methods=['POST'])
+def like():
+  global user
+  dish_id = request.form['id']
+  g.conn.execute('INSERT INTO likes VALUES (%s, %s)', user['id'], dish_id)
+  return redirect("/collection/"+user['id'])
 
 # Adding new user credentials to the database
 @app.route('/signup', methods=['POST'])

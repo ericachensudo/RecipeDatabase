@@ -5,6 +5,10 @@
 <body>
   
   <h2>{{info.dish_name}} ({{info.cuisine}})</h2>
+  <form method="POST" action="/like">
+    <input class="invisible" type="text" name="id" value="{{info.dish_id}}"> <input type="submit" value="Like">
+  </form>
+
   <h3>Chef: {{info.auth_name}}, Prep Time: {{info.prep_time}} min</h3>
   <h3>Spicy: {{info.spicy}}, Cookware: {{info.cookware}}({{info.electric}})</h3>
 
