@@ -41,11 +41,11 @@ engine = create_engine(DATABASEURI)
 # Example of running queries in your database
 # Note that this will probably not work if you already have a table named 'test' in your database, containing meaningful data. This is only an example showing you how to run queries in your database using SQLAlchemy.
 #
-engine.execute("""CREATE TABLE IF NOT EXISTS test (
-  id serial,
-  name text
-);""")
-engine.execute("""INSERT INTO test(name) VALUES ('grace hopper'), ('alan turing'), ('ada lovelace');""")
+#engine.execute("""CREATE TABLE IF NOT EXISTS test (
+#  id serial,
+#  name text
+#);""")
+#engine.execute("""INSERT INTO test(name) VALUES ('grace hopper'), ('alan turing'), ('ada lovelace');""")
 
 
 @app.before_request
@@ -109,46 +109,135 @@ def index():
   #
   # example of a database query
   #
-  cursor = g.conn.execute("SELECT name FROM test")
-  names = []
+  #cursor = g.conn.execute("SELECT name FROM test")
+  #names = []
+  #for result in cursor:
+  #  names.append(result['name'])  # can also be accessed using result[0]
+  #cursor.close()
+
+  cursor = g.conn.execute("SELECT dish_id, dish_name FROM recipe")
+  dishes = []
   for result in cursor:
-    names.append(result['name'])  # can also be accessed using result[0]
+    temp = dict()
+    temp['dish_id'] = result['dish_id']
+    temp['dish_name'] = result['dish_name']
+    dishes.append(temp)
   cursor.close()
 
-  #
-  # Flask uses Jinja templates, which is an extension to HTML where you can
-  # pass data to a template and dynamically generate HTML based on the data
-  # (you can think of it as simple PHP)
-  # documentation: https://realpython.com/primer-on-jinja-templating/
-  #
-  # You can see an example template in templates/index.html
-  #
-  # context are the variables that are passed to the template.
-  # for example, "data" key in the context variable defined below will be
-  # accessible as a variable in index.html:
-  #
-  #     # will print: [u'grace hopper', u'alan turing', u'ada lovelace']
-  #     <div>{{data}}</div>
-  #
-  #     # creates a <div> tag for each element in data
-  #     # will print:
-  #     #
-  #     #   <div>grace hopper</div>
-  #     #   <div>alan turing</div>
-  #     #   <div>ada lovelace</div>
-  #     #
-  #     {% for n in data %}
-  #     <div>{{n}}</div>
-  #     {% endfor %}
-  #
-  context = dict(data = names)
+  #context = dict(data = names)
+  dish = dict(dish = dishes)
+
+  return render_template("index.html", **dish)
 
 
-  #
-  # render_template looks in the templates/ folder for files.
-  # for example, the below file reads template/index.html
-  #
-  return render_template("index.html", **context)
+@app.route('/search', methods=['POST'])
+def search():
+  keyword = request.form['keyword']
+  if not keyword:
+    return redirect('/')
+  return redirect('/search/'+keyword)
+
+@app.route('/search/<keyword>')
+def search_result(keyword=None):
+  keyword = keyword.lower()
+  cursor = g.conn.execute("SELECT R.dish_id, R.dish_name FROM Recipe R WHERE LOWER(R.dish_name) LIKE '%%"+keyword+"%%'") 
+  dishes = []
+  for result in cursor:
+    temp = dict()
+    temp['dish_id'] = result['dish_id']
+    temp['dish_name'] = result['dish_name']
+    dishes.append(temp)
+  cursor.close()
+  dish = dict(dish = dishes)
+  return render_template("search_result.html", **dish)
+
+
+@app.route('/sort', methods=['POST'])
+def sort():
+  sorting = request.form['sorting']
+  return redirect('/sort/'+sorting)
+
+@app.route('/sort/<sorting>')
+def sort_result(sorting=None):
+  
+  criteria = sorting.split("_")[0]
+  order = sorting.split("_")[1]
+  
+  if criteria=="calorie":
+    cursor = g.conn.execute("SELECT R.dish_id, R.dish_name, SUM(I.calorie*C.quantity) AS calorie FROM Recipe R, Contains C, Ingredients I WHERE R.dish_id=C.dish_id AND C.ingredient_id=I.ingredient_id GROUP BY R.dish_id ORDER BY calorie "+order+", R.dish_name "+order) 
+  elif criteria=="prep":
+    criteria="prep_time"
+    cursor = g.conn.execute("SELECT dish_id, dish_name, prep_time FROM Recipe ORDER BY prep_time "+order+", dish_name "+order) 
+  dishes = []
+  for result in cursor:
+    temp = dict()
+    temp['dish_id'] = result['dish_id']
+    temp['dish_name'] = result['dish_name']
+    temp[criteria] = result[criteria]
+    dishes.append(temp)
+  cursor.close()
+  dish = dict(dish = dishes)
+  return render_template("index.html", **dish)
+
+
+@app.route('/view/<id>')
+def view(id=None):
+  infos = dict()
+  cursor = g.conn.execute("SELECT dish_name, prep_time, is_spicy, instructions FROM Recipe WHERE dish_id='"+id+"'") 
+  content = cursor.fetchone()
+  infos['dish_name'] = content['dish_name']
+  infos['prep_time'] = content['prep_time']
+  is_spicy = content['is_spicy']
+  spicy = "No"
+  if is_spicy:
+    spicy = "Yes"
+  infos['spicy'] = spicy
+  infos['instruction'] = content['instructions']
+  cursor.close()
+
+  cursor = g.conn.execute("SELECT C.region_name FROM Recipe R, Type_of T, Cuisine C WHERE C.cuisine_id=T.cuisine_id and T.dish_id=R.dish_id and R.dish_id='"+id+"'") 
+  content = cursor.fetchone()
+  infos['cuisine'] = content['region_name']
+  cursor.close()
+
+  cursor = g.conn.execute("SELECT A.auth_name FROM Recipe R, Writes W, Author A WHERE W.auth_id=A.auth_id and W.dish_id=R.dish_id and R.dish_id='"+id+"'") 
+  content = cursor.fetchone()
+  infos['auth_name'] = content['auth_name']
+  cursor.close()
+
+  cursor = g.conn.execute("SELECT C.cookware_name, C.is_electric FROM Recipe R, Utilizes U, Cookware C WHERE C.cookware_id=U.cookware_id and U.dish_id=R.dish_id and R.dish_id='"+id+"'") 
+  content = cursor.fetchone()
+  infos['cookware'] = content['cookware_name']
+  is_electric = content['is_electric']
+  electric = "not electric"
+  if is_electric:
+    electric = "electric"
+  infos['electric'] = electric
+  cursor.close()
+
+  cursor = g.conn.execute("SELECT I.ingredient_id, I.ingredient_name, I.carb, I.protein, I.fat, I.calorie, I.unit, C.quantity FROM Recipe R, Contains C, Ingredients I WHERE I.ingredient_id=C.ingredient_id and R.dish_id=C.dish_id and C.dish_id='"+id+"'") 
+  ingredients = []
+  cal = 0
+  for result in cursor:
+    temp = dict()
+    temp['name'] = result['ingredient_name']
+    quantity = result['quantity']
+    temp['quantity'] = quantity
+    temp['unit'] = result['unit']
+    temp['carb'] = result['carb']*quantity
+    temp['protein'] = result['protein']*quantity
+    temp['fat'] = result['fat']*quantity
+    calorie = result['calorie']*quantity
+    cal += calorie
+    temp['calorie'] = calorie
+    ingredients.append(temp)
+  cursor.close()
+
+  infos['cal'] = cal
+  info = dict(info=infos)
+  ingredient = dict(ingredient = ingredients)
+
+  return render_template('view.html',**info,**ingredient)
 
 #
 # This is an example of a different path.  You can see it at:
