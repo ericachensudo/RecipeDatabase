@@ -1,20 +1,28 @@
 <html>
-    <style>
+    <head><meta charset="utf-8"></head><head><style>
         body{
             font-size: 15pt;
             font-family: arial;
         }
     </style>
 
-    <body>
-
-        <form method="POST" action="/add">
-            <p>Name of new computer scientist: <input type="text" name="name"> <input type="submit" value="Add"></p>
-        </form>
-
-        <form method="POST" action="/add">
-            <p>Name of new computer scientist: <input type="text" name="name"> <input type="submit" value="Add"></p>
-        </form>
+    </head><body>
         
-    </body>
-</html>
+        <div class="container">
+            <h1>Please login</h1>
+            <br>
+            <form action="" method="post">
+              <input type="text" placeholder="Name" name="name" value="{{
+                request.form.name }}">
+               <input type="pswd" placeholder="Password" name="pswd" value="{{
+                request.form.pswd }}">
+              <input class="btn btn-default" type="submit" value="Login">
+            </form>
+            {% if error %}
+              <p class="error"><strong>Error:</strong> {{ error }}
+            {% endif %}
+        </div>
+
+        <p><a href="signup"> Register an account with us!</a></p>
+
+</body></html>
