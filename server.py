@@ -158,16 +158,23 @@ def index():
 # Notice that the function name is another() rather than index()
 # The functions for each app.route need to have different names
 #
-@app.route('/another')
-def another():
-  return render_template("another.html")
 
+@app.route('/signin')
+def signin():
+  return render_template("signin.html")
 
 # Example of adding new data to the database
-@app.route('/add', methods=['POST'])
+@app.route('/add_user_id', methods=['POST'])
 def add():
   name = request.form['name']
-  g.conn.execute('INSERT INTO test(name) VALUES (%s)', name)
+  g.conn.execute('INSERT INTO Users(name) VALUES (%s)', name)
+  return redirect('/')
+
+  # Example of adding new data to the database
+@app.route('/add_password', methods=['POST'])
+def add():
+  pswd = request.form['pswd']
+  g.conn.execute('INSERT INTO Users(pswd) VALUES (%s)', pswd)
   return redirect('/')
 
 
