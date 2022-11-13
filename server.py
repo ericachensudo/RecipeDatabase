@@ -18,7 +18,7 @@ tmpl_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'templates')
 app = Flask(__name__, template_folder=tmpl_dir)
 
 
-#
+
 # The following is a dummy URI that does not connect to a valid database. You will need to modify it to connect to your Part 2 database in order to use the data.
 #
 # XXX: The URI should be in the format of:
@@ -157,45 +157,33 @@ def index():
 #
 # Notice that the function name is another() rather than index()
 # The functions for each app.route need to have different names
-#
 
-
-# Register new username and password to database
-@app.route('/signup')
-def signup():
-  return render_template("signup.html")
-
+# Checking inputs with database of recipes (you dont need an account)
 @app.route('/recs', methods=['GET', 'POST'])
 def recs():
   if request.method == 'POST':
-    return request.form.getlist('mycheckbox')
-    return 'Done'
-  return render_template('recs.html')
+  spicy = g.conn.execute('SELECT * FROM Recipe WHERE is_spicy == True')
+  quick = g.conn.execute('SELECT * FROM Recipe WHERE prep_time < 30')
+  
+  snack = g.conn.execute('SELECT * FROM Recipe r, Contains c WHERE dish_id r.dis_id == c.dish_id and c.portion == 1', )
+  res = []
+  
+  return request.form.getlist('mycheckbox')
 
 # Checking inputs (username, password) with databases of users
 @app.route('/login', methods=['GET', 'POST'])
 def login():
-    error = None
-    if request.method == 'POST':
-        if request.form['name'] != 'name' or request.form['pswd'] != 'pswd':
-            error = 'Invalid Credentials. Please try again.'
-        else:
-            return redirect(url_for('index.html'))
-    return render_template('login.html', error=error)
+  
 
-# Aadding new id to the database
-@app.route('/add_user_id', methods=['POST'])
-def add_name():
+# Adding new user credentials to the database
+@app.route('/signup', methods='POST')
+def signup():
+  user_id = request.form['user_id']
   name = request.form['name']
-  g.conn.execute('INSERT INTO Users(name) VALUES (%s)', name)
-  return redirect('/')
-
-# Adding new password to the database
-@app.route('/add_password', methods=['POST'])
-def add_pswd():
-  pswd = request.form['pswd']
-  g.conn.execute('INSERT INTO Users(pswd) VALUES (%s)', pswd)
-  return redirect('/')
+  password = request.form['password']
+  email = request.form['email']
+  g.conn.execute('INSERT INTO Users VALUES (%s, %s, %s, %s)', user_id, name, password, email)
+  return render_template('signup.html')
 
 
 if __name__ == "__main__":

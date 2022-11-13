@@ -5,17 +5,18 @@
         body{
             font-size: 15pt;
             font-family: arial;
+            text-align: center;
         }
         </style>
 
     <body>
+        <h1>Please register your information</h1>
 
-        <form method="POST" action="/add_user_id">
-            <p> User ID: <input type="text" name="id"> <input type="submit" value="Add Name"></p>
-        </form>
-
-        <form method="POST" action="/add_password">
-            <p> Password: <input type="text" name="pswd"> <input type="submit" value="Add Password"></p>
+        <form method="POST" action="/signup">
+            <p> User ID: <input type="text" name="user_id"> <input type="submit" value="Add EID"></p>
+            <p> Password: <input type="text" name="name"> <input type="submit" value="Add Name"></p>
+            <p> Password: <input type="text" name="password"> <input type="submit" value="Add Password"></p>
+            <p> Password: <input type="text" name="email"> <input type="submit" value="Add Email"></p>
         </form>
     
     </body>
