@@ -251,21 +251,22 @@ def view(id=None):
 @app.route('/recs', methods=['GET', 'POST'])
 def recs():
   if request.method == 'POST':
-  spicy = g.conn.execute('SELECT * FROM Recipe WHERE is_spicy == True')
-  quick = g.conn.execute('SELECT * FROM Recipe WHERE prep_time < 30')
-  
-  snack = g.conn.execute('SELECT * FROM Recipe r, Contains c WHERE dish_id r.dis_id == c.dish_id and c.portion == 1', )
-  res = []
+    spicy = g.conn.execute('SELECT * FROM Recipe WHERE is_spicy == True')
+    quick = g.conn.execute('SELECT * FROM Recipe WHERE prep_time < 30')
+    
+    snack = g.conn.execute('SELECT * FROM Recipe r, Contains c WHERE dish_id r.dis_id == c.dish_id and c.portion == 1', )
+    res = []
   
   return request.form.getlist('mycheckbox')
 
 # Checking inputs (username, password) with databases of users
 @app.route('/login', methods=['GET', 'POST'])
 def login():
+  return redirect("/")
   
 
 # Adding new user credentials to the database
-@app.route('/signup', methods='POST')
+@app.route('/signup', methods=['POST'])
 def signup():
   user_id = request.form['user_id']
   name = request.form['name']
