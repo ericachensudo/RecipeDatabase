@@ -1,0 +1,30 @@
+{% extends "layout.html" %}
+
+{% block content %}
+
+<body>
+  
+  <h2>{{info.dish_name}} ({{info.cuisine}})</h2>
+  <h3>Chef: {{info.auth_name}}, Prep Time: {{info.prep_time}} min</h3>
+  <h3>Spicy: {{info.spicy}}, Cookware: {{info.cookware}}({{info.electric}})</h3>
+
+  <h3>Ingredient List</h3>
+  <ul class="ingredient_list">
+    {% for n in ingredient %}
+    <li>{{n.name}}, {{n.quantity}} {{n.unit}}</li>
+    {% endfor %}
+  </ul>
+
+  <h3>Instruction</h3>
+  <div>{{info.instruction}}.</div>
+
+  <h3>Nutritional Facts</h3>
+  <ul class="nutrient_list">
+    {% for n in ingredient %}
+    <li>{{n.name}}: {{n.carb}}g carb + {{n.protein}}g protein + {{n.fat}}g fat = {{n.calorie}}cal </li>
+    {% endfor %}
+  </ul>
+  <div>Total: {{info.cal}} cal</div>
+</body>
+
+{% endblock %}

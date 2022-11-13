@@ -3,20 +3,12 @@
 {% block content %}
 
 <body>
-  <form method="POST" action="/search">
-  <input type="text" name="keyword"> <input type="submit" value="Search">
-  </form>
   <h2>Recipe List</h2>
   <ul class="recipe_list">
     {% for n in dish %}
-    <li><a href="/{{n.dish_id}}">{{n.dish_name}}</a></li>
+    <li><a href="/view/{{n.dish_id}}">{{n.dish_name}}</a></li>
     {% endfor %}
   </ul>
-
-
 </body>
-
-
-
 
 {% endblock %}
