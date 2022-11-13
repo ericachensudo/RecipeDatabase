@@ -5,10 +5,18 @@
       font-family: arial;
     }
 
-    .nav{
+    ul{
       list-style-type: none;
       margin: 0;
       padding: 0;
+    }
+
+    .nav_bar{
+      padding: 10px;
+      margin: 0;
+      background-color: lightgray;
+      color: black;
+      border-radius: 10px;
     }
 
     a:link { text-decoration: none; }
@@ -20,16 +28,17 @@
   <title>Recipe Book</title>
 
   <h1>Recipe Book</h1>
-  <ul class="nav">
-    <li><a href="/">Home</a></li>
-    <li><a href="/login">Log In</a></li>
-    <li><a href="/recommendations">Recommend</a></li>
-  </ul>
-  <form method="POST" action="/search">
-    <input type="text" name="keyword"> <input type="submit" value="Search">
+  <div >
+    <a class="nav_bar" href="/">Home</a>
+    <a class="nav_bar" href="/login">Log In</a>
+    <a class="nav_bar" href="/recommendations">Recommend</a>
+    <form class="nav_bar" method="POST" action="/search">
+      <input type="text" name="keyword"> <input type="submit" value="Search">
     </form>
+  </div>
 
-  <div class="container">
+
+  <div>
     {% block content %}
     {% endblock %}
 

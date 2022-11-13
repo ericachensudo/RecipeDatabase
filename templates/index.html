@@ -3,6 +3,14 @@
 {% block content %}
 
 <body>
+  <form method="POST" action="/sort">
+    <input type="radio" id="calorie_asc" name="sorting" value="calorie_asc"> Calorie (Ascending)
+    <input type="radio" id="calorie_desc" name="sorting" value="calorie_desc"> Calorie (Descending)
+    <input type="radio" id="prep_asc" name="sorting" value="prep_asc"> Prep Time (Ascending)
+    <input type="radio" id="prep_desc" name="sorting" value="prep_desc"> Prep Time (Descending)
+    <input type="submit" value="Sort">
+  </form>
+
   <h2>Recipe List</h2>
   <ul class="recipe_list">
     {% for n in dish %}

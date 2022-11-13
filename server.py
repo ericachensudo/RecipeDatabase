@@ -133,6 +133,8 @@ def index():
 @app.route('/search', methods=['POST'])
 def search():
   keyword = request.form['keyword']
+  if not keyword:
+    return redirect('/')
   return redirect('/search/'+keyword)
 
 @app.route('/search/<keyword>')
@@ -148,6 +150,34 @@ def search_result(keyword=None):
   cursor.close()
   dish = dict(dish = dishes)
   return render_template("search_result.html", **dish)
+
+
+@app.route('/sort', methods=['POST'])
+def sort():
+  sorting = request.form['sorting']
+  return redirect('/sort/'+sorting)
+
+@app.route('/sort/<sorting>')
+def sort_result(sorting=None):
+  
+  criteria = sorting.split("_")[0]
+  order = sorting.split("_")[1]
+  
+  if criteria=="calorie":
+    cursor = g.conn.execute("SELECT R.dish_id, R.dish_name, SUM(I.calorie*C.quantity) AS calorie FROM Recipe R, Contains C, Ingredients I WHERE R.dish_id=C.dish_id AND C.ingredient_id=I.ingredient_id GROUP BY R.dish_id ORDER BY calorie "+order+", R.dish_name "+order) 
+  elif criteria=="prep":
+    criteria="prep_time"
+    cursor = g.conn.execute("SELECT dish_id, dish_name, prep_time FROM Recipe ORDER BY prep_time "+order+", dish_name "+order) 
+  dishes = []
+  for result in cursor:
+    temp = dict()
+    temp['dish_id'] = result['dish_id']
+    temp['dish_name'] = result['dish_name']
+    temp[criteria] = result[criteria]
+    dishes.append(temp)
+  cursor.close()
+  dish = dict(dish = dishes)
+  return render_template("index.html", **dish)
 
 
 @app.route('/view/<id>')
