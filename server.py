@@ -115,40 +115,38 @@ def index():
     names.append(result['name'])  # can also be accessed using result[0]
   cursor.close()
 
-  #
-  # Flask uses Jinja templates, which is an extension to HTML where you can
-  # pass data to a template and dynamically generate HTML based on the data
-  # (you can think of it as simple PHP)
-  # documentation: https://realpython.com/primer-on-jinja-templating/
-  #
-  # You can see an example template in templates/index.html
-  #
-  # context are the variables that are passed to the template.
-  # for example, "data" key in the context variable defined below will be
-  # accessible as a variable in index.html:
-  #
-  #     # will print: [u'grace hopper', u'alan turing', u'ada lovelace']
-  #     <div>{{data}}</div>
-  #
-  #     # creates a <div> tag for each element in data
-  #     # will print:
-  #     #
-  #     #   <div>grace hopper</div>
-  #     #   <div>alan turing</div>
-  #     #   <div>ada lovelace</div>
-  #     #
-  #     {% for n in data %}
-  #     <div>{{n}}</div>
-  #     {% endfor %}
-  #
+  cursor = g.conn.execute("SELECT dish_id, dish_name FROM recipe")
+  dishes = []
+  for result in cursor:
+    temp = dict()
+    temp['dish_id'] = result['dish_id']
+    temp['dish_name'] = result['dish_name']
+    dishes.append(temp)
+  cursor.close()
+
   context = dict(data = names)
+  dish = dict(dish = dishes)
 
+  return render_template("index.html", **context, **dish)
 
-  #
-  # render_template looks in the templates/ folder for files.
-  # for example, the below file reads template/index.html
-  #
-  return render_template("index.html", **context)
+@app.route('/search', methods=['POST'])
+def search():
+  print(request.args)
+  keyword = request.form['keyword']
+  print(keyword)
+  print("SELECT R.dish_id, R.dish_name FROM Recipe R WHERE R.dish_name LIKE '%%"+keyword+"%%'")
+  cursor = g.conn.execute("SELECT R.dish_id, R.dish_name FROM Recipe R WHERE R.dish_name LIKE '%%"+keyword+"%%'") 
+  dishes = []
+  for result in cursor:
+    temp = dict()
+    temp['dish_id'] = result['dish_id']
+    temp['dish_name'] = result['dish_name']
+    dishes.append(temp)
+  cursor.close()
+
+  dish = dict(dish = dishes)
+  return render_template("search.html", **dish)
+
 
 #
 # This is an example of a different path.  You can see it at:
