@@ -159,29 +159,43 @@ def index():
 # The functions for each app.route need to have different names
 #
 
-@app.route('/signin')
-def signin():
-  return render_template("signin.html")
 
-# Example of adding new data to the database
+# Register new username and password to database
+@app.route('/signup')
+def signup():
+  return render_template("signup.html")
+
+@app.route('/recs', methods=['GET', 'POST'])
+def recs():
+  if request.method == 'POST':
+    return request.form.getlist('mycheckbox')
+    return 'Done'
+  return render_template('recs.html')
+
+# Checking inputs (username, password) with databases of users
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    error = None
+    if request.method == 'POST':
+        if request.form['name'] != 'name' or request.form['pswd'] != 'pswd':
+            error = 'Invalid Credentials. Please try again.'
+        else:
+            return redirect(url_for('index.html'))
+    return render_template('login.html', error=error)
+
+# Aadding new id to the database
 @app.route('/add_user_id', methods=['POST'])
-def add():
+def add_name():
   name = request.form['name']
   g.conn.execute('INSERT INTO Users(name) VALUES (%s)', name)
   return redirect('/')
 
-  # Example of adding new data to the database
+# Adding new password to the database
 @app.route('/add_password', methods=['POST'])
-def add():
+def add_pswd():
   pswd = request.form['pswd']
   g.conn.execute('INSERT INTO Users(pswd) VALUES (%s)', pswd)
   return redirect('/')
-
-
-@app.route('/login')
-def login():
-    abort(401)
-    this_is_never_executed()
 
 
 if __name__ == "__main__":
@@ -191,7 +205,7 @@ if __name__ == "__main__":
   @click.option('--debug', is_flag=True)
   @click.option('--threaded', is_flag=True)
   @click.argument('HOST', default='0.0.0.0')
-  @click.argument('PORT', default=8111, type=int)
+  @click.argument('PORT', default=8112, type=int)
   def run(debug, threaded, host, port):
     """
     This function handles command line parameters.
