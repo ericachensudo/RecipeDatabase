@@ -11,11 +11,18 @@
 
     <body>
         <form method="POST" action="/recs">
-            Spicy <input type="checkbox" value= "is_spicy" name="mycheckbox">
-            Quick <input type="checkbox" value="prep_time" name="mycheckbox">
-            Diet <input type="checkbox" value="calorie" name="mycheckbox">
-        <input type="submit">
-
+            Spicy <input type="checkbox" value= "is_spicy" name="preference">
+            Quick <input type="checkbox" value="prep_time" name="preference">
+            Diet <input type="checkbox" value="calorie" name="preference">
+        <input type="submit" value="Recommendations">
         </form>
+
+        <h2>Recipe List</h2>
+        <ul class="recipe_list">
+          {% for n in dish %}
+          <li><a href="/recs/{{n.dish_id}}">{{n.dish_name}}</a></li>
+          {% endfor %}
+        </ul>
+
     </body>
 </html>
