@@ -18,7 +18,9 @@ tmpl_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'templates')
 app = Flask(__name__, template_folder=tmpl_dir)
 
 global keyword
+global user
 keyword=""
+user = {'id': "default", "name": "default"}
 
 # The following is a dummy URI that does not connect to a valid database. You will need to modify it to connect to your Part 2 database in order to use the data.
 #
@@ -265,9 +267,26 @@ def recs():
   return request.form.getlist('mycheckbox')
 
 # Checking inputs (username, password) with databases of users
-@app.route('/login', methods=['GET', 'POST'])
+@app.route('/login', methods=['POST'])
 def login():
-  return redirect("/")
+  global user
+  userid = request.form['userid']
+  pswd = request.form['pswd']
+  cursor = g.conn.execute("SELECT * FROM Users WHERE user_id='"+userid+"' AND user_password='"+pswd+"'")
+  content = cursor.fetchone()
+  if content:
+    user['id'] = content['user_id']
+    user['name'] = content['user_name']
+    return redirect("/")
+  else:
+    error_msg = "Incorrect user id and password combination."
+    error = dict(error=error_msg)
+    return render_template("login.html", **error)
+
+@app.route('/login_page')
+def login_page():
+  global user
+  return render_template("login.html")
   
 
 # Adding new user credentials to the database
