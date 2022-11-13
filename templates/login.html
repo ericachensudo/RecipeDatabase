@@ -1,10 +1,13 @@
 <html>
-    <head><meta charset="utf-8"></head><head><style>
+    <head><meta charset="utf-8"></head>
+    <head>
+        <style>
         body{
             font-size: 15pt;
             font-family: arial;
+            text-align: center;
         }
-    </style>
+        </style>
 
     </head><body>
         
@@ -12,7 +15,7 @@
             <h1>Please login</h1>
             <br>
             <form action="" method="post">
-              <input type="text" placeholder="Name" name="name" value="{{
+              <input type="text" placeholder="User ID" name="name" value="{{
                 request.form.name }}">
                <input type="pswd" placeholder="Password" name="pswd" value="{{
                 request.form.pswd }}">
