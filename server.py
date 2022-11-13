@@ -19,7 +19,10 @@ from flask import Flask, request, url_for, render_template, g, redirect, Respons
 tmpl_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'templates')
 app = Flask(__name__, template_folder=tmpl_dir)
 
-
+global keyword
+global user
+keyword=""
+user = {'id': "default", "name": "default"}
 
 # The following is a dummy URI that does not connect to a valid database. You will need to modify it to connect to your Part 2 database in order to use the data.
 #
@@ -93,6 +96,8 @@ def teardown_request(exception):
 #
 @app.route('/')
 def index():
+  global keyword
+  keyword=""
   """
   request is a special object that Flask provides to access web request information:
 
@@ -134,6 +139,7 @@ def index():
 
 @app.route('/search', methods=['POST'])
 def search():
+  global keyword
   keyword = request.form['keyword']
   if not keyword:
     return redirect('/')
@@ -159,34 +165,37 @@ def search_result(keyword=None):
 #   sorting = request.form['sorting']
 #   return redirect('/sort/'+sorting)
 
-# @app.route('/sort/<sorting>')
-# def sort_result(sorting=None):
+
+@app.route('/sort/<sorting>')
+def sort_result(sorting=None):
+  global keyword
+  keyword = keyword.lower()
+  criteria = sorting.split("_")[0]
+  order = sorting.split("_")[1]
   
-#   criteria = sorting.split("_")[0]
-#   order = sorting.split("_")[1]
-  
-#   if criteria=="calorie":
-#     cursor = g.conn.execute("SELECT R.dish_id, R.dish_name, SUM(I.calorie*C.quantity) AS calorie FROM Recipe R, Contains C, Ingredients I WHERE R.dish_id=C.dish_id AND C.ingredient_id=I.ingredient_id GROUP BY R.dish_id ORDER BY calorie "+order+", R.dish_name "+order) 
-#   elif criteria=="prep":
-#     criteria="prep_time"
-#     cursor = g.conn.execute("SELECT dish_id, dish_name, prep_time FROM Recipe ORDER BY prep_time "+order+", dish_name "+order) 
-#   dishes = []
-#   for result in cursor:
-#     temp = dict()
-#     temp['dish_id'] = result['dish_id']
-#     temp['dish_name'] = result['dish_name']
-#     temp[criteria] = result[criteria]
-#     dishes.append(temp)
-#   cursor.close()
-#   dish = dict(dish = dishes)
-#   return render_template("index.html", **dish)
+  if criteria=="calorie":
+    cursor = g.conn.execute("SELECT R.dish_id, R.dish_name, SUM(I.calorie*C.quantity) AS calorie FROM Recipe R, Contains C, Ingredients I WHERE R.dish_id=C.dish_id AND C.ingredient_id=I.ingredient_id AND LOWER(R.dish_name) LIKE '%%"+keyword+"%%' GROUP BY R.dish_id ORDER BY calorie "+order+", R.dish_name "+order) 
+  elif criteria=="prep":
+    criteria="prep_time"
+    cursor = g.conn.execute("SELECT dish_id, dish_name, prep_time FROM Recipe WHERE LOWER(dish_name) LIKE '%%"+keyword+"%%' ORDER BY prep_time "+order+", dish_name "+order) 
+  dishes = []
+  for result in cursor:
+    temp = dict()
+    temp['dish_id'] = result['dish_id']
+    temp['dish_name'] = result['dish_name']
+    temp[criteria] = result[criteria]
+    dishes.append(temp)
+  cursor.close()
+  dish = dict(dish = dishes)
+  return render_template("index.html", **dish)
 
 
 @app.route('/view/<id>')
 def view(id=None):
   infos = dict()
-  cursor = g.conn.execute("SELECT dish_name, prep_time, is_spicy, instructions FROM Recipe WHERE dish_id='"+id+"'") 
+  cursor = g.conn.execute("SELECT * FROM Recipe WHERE dish_id='"+id+"'") 
   content = cursor.fetchone()
+  infos['dish_id'] = content['dish_id']
   infos['dish_name'] = content['dish_name']
   infos['prep_time'] = content['prep_time']
   is_spicy = content['is_spicy']
@@ -248,17 +257,54 @@ def view(id=None):
 #
 # Notice that the function name is another() rather than index()
 # The functions for each app.route need to have different names
-# Checking inputs (username, password) with databases of users
 
-@app.route('/login', methods=['GET', 'POST'])
+# Checking inputs (username, password) with databases of users
+@app.route('/login', methods=['POST'])
 def login():
-  error = None
-  if request.method == 'POST':
-      if request.form['username'] != 'admin' or request.form['password'] != 'admin':
-          error = 'Invalid Credentials. Please try again.'
-      else:
-          return redirect(url_for('home'))
-  return render_template('login.html', error=error)
+  global user
+  userid = request.form['userid']
+  pswd = request.form['pswd']
+  cursor = g.conn.execute("SELECT * FROM Users WHERE user_id='"+userid+"' AND user_password='"+pswd+"'")
+  content = cursor.fetchone()
+  if content:
+    user['id'] = content['user_id']
+    user['name'] = content['user_name']
+    return redirect("/collection/"+user['id'])
+  else:
+    error_msg = "Incorrect user id and password combination."
+    error = dict(error=error_msg)
+    return render_template("login.html", **error)
+
+@app.route('/login_page')
+def login_page():
+  global user
+  return render_template("login.html")
+
+@app.route('/tocollection')
+def tocollection():
+  global user
+  userid = user['id']
+  return redirect("/collection/"+user['id'])
+
+@app.route('/collection/<userid>')
+def collection(userid=None):
+  cursor = g.conn.execute("SELECT R.dish_id, R.dish_name FROM Recipe R, Likes L, Users U WHERE L.user_id=U.user_id AND R.dish_id=L.dish_id AND U.user_id='"+userid+"'")
+  dishes = []
+  for result in cursor:
+    temp = dict()
+    temp['dish_id'] = result['dish_id']
+    temp['dish_name'] = result['dish_name']
+    dishes.append(temp)
+  cursor.close()
+  dish = dict(dish = dishes)
+  return render_template("collection.html", **dish)
+
+@app.route('/like', methods=['POST'])
+def like():
+  global user
+  dish_id = request.form['id']
+  g.conn.execute('INSERT INTO likes VALUES (%s, %s)', user['id'], dish_id)
+  return redirect("/collection/"+user['id'])
 
 # Adding new user credentials to the database
 @app.route('/signup', methods=['POST'])

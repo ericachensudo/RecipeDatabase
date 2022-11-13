@@ -1,30 +1,12 @@
 <html>
 <body>
-  <form method="POST" action="/sort">
-    <input type="radio" id="calorie_asc" name="sorting" value="calorie_asc"> Calorie (Ascending)
-    <input type="radio" id="calorie_desc" name="sorting" value="calorie_desc"> Calorie (Descending)
-    <input type="radio" id="prep_asc" name="sorting" value="prep_asc"> Prep Time (Ascending)
-    <input type="radio" id="prep_desc" name="sorting" value="prep_desc"> Prep Time (Descending)
-    <input type="submit" value="Sort">
-  </form>
-
-  <h2>Recipe List</h2>
+  <h2>Recipe of the Week</h2>
   <ul class="recipe_list">
     {% for n in dish %}
     <li><a href="/view/{{n.dish_id}}">{{n.dish_name}}</a></li>
     {% endfor %}
   </ul>
 
-
-
-
-<p><a href="recs">Recommendations</a></p>
-
-<p><a href="login">Log In</a></p>
-
-<form method="POST" action="/add">
-<p>Name of new computer scientist: <input type="text" name="name"> <input type="submit" value="Add"></p>
-</form>
-
 </body>
 </html>
+{% endblock %}

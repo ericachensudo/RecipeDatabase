@@ -14,11 +14,9 @@
         <div class="container">
             <h1>Please login</h1>
             <br>
-            <form action="" method="post">
-              <input type="text" placeholder="User ID" name="name" value="{{
-                request.form.name }}">
-               <input type="pswd" placeholder="Password" name="pswd" value="{{
-                request.form.pswd }}">
+            <form method="POST" action="/login">
+              <input type="text" placeholder="User ID" name="userid">
+               <input type="pswd" placeholder="Password" name="pswd">
               <input class="btn btn-default" type="submit" value="Login">
             </form>
             {% if error %}
