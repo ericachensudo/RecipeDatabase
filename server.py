@@ -17,7 +17,8 @@ from flask import Flask, request, render_template, g, redirect, Response
 tmpl_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'templates')
 app = Flask(__name__, template_folder=tmpl_dir)
 
-
+global keyword
+keyword=""
 
 # The following is a dummy URI that does not connect to a valid database. You will need to modify it to connect to your Part 2 database in order to use the data.
 #
@@ -91,6 +92,8 @@ def teardown_request(exception):
 #
 @app.route('/')
 def index():
+  global keyword
+  keyword=""
   """
   request is a special object that Flask provides to access web request information:
 
@@ -132,6 +135,7 @@ def index():
 
 @app.route('/search', methods=['POST'])
 def search():
+  global keyword
   keyword = request.form['keyword']
   if not keyword:
     return redirect('/')
@@ -159,15 +163,16 @@ def sort():
 
 @app.route('/sort/<sorting>')
 def sort_result(sorting=None):
-  
+  global keyword
+  keyword = keyword.lower()
   criteria = sorting.split("_")[0]
   order = sorting.split("_")[1]
   
   if criteria=="calorie":
-    cursor = g.conn.execute("SELECT R.dish_id, R.dish_name, SUM(I.calorie*C.quantity) AS calorie FROM Recipe R, Contains C, Ingredients I WHERE R.dish_id=C.dish_id AND C.ingredient_id=I.ingredient_id GROUP BY R.dish_id ORDER BY calorie "+order+", R.dish_name "+order) 
+    cursor = g.conn.execute("SELECT R.dish_id, R.dish_name, SUM(I.calorie*C.quantity) AS calorie FROM Recipe R, Contains C, Ingredients I WHERE R.dish_id=C.dish_id AND C.ingredient_id=I.ingredient_id AND LOWER(R.dish_name) LIKE '%%"+keyword+"%%' GROUP BY R.dish_id ORDER BY calorie "+order+", R.dish_name "+order) 
   elif criteria=="prep":
     criteria="prep_time"
-    cursor = g.conn.execute("SELECT dish_id, dish_name, prep_time FROM Recipe ORDER BY prep_time "+order+", dish_name "+order) 
+    cursor = g.conn.execute("SELECT dish_id, dish_name, prep_time FROM Recipe WHERE LOWER(dish_name) LIKE '%%"+keyword+"%%' ORDER BY prep_time "+order+", dish_name "+order) 
   dishes = []
   for result in cursor:
     temp = dict()
