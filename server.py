@@ -11,8 +11,10 @@ Read about it online.
 import os
   # accessible as a variable in index.html:
 from sqlalchemy import *
+# from codejana_flask import app
 from sqlalchemy.pool import NullPool
-from flask import Flask, request, render_template, g, redirect, Response
+from flask import Flask, request, url_for, render_template, g, redirect, Response
+# from codejana_flask.forms import RegistrationForm
 
 tmpl_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'templates')
 app = Flask(__name__, template_folder=tmpl_dir)
@@ -152,32 +154,32 @@ def search_result(keyword=None):
   return render_template("search_result.html", **dish)
 
 
-@app.route('/sort', methods=['POST'])
-def sort():
-  sorting = request.form['sorting']
-  return redirect('/sort/'+sorting)
+# @app.route('/sort', methods=['POST'])
+# def sort():
+#   sorting = request.form['sorting']
+#   return redirect('/sort/'+sorting)
 
-@app.route('/sort/<sorting>')
-def sort_result(sorting=None):
+# @app.route('/sort/<sorting>')
+# def sort_result(sorting=None):
   
-  criteria = sorting.split("_")[0]
-  order = sorting.split("_")[1]
+#   criteria = sorting.split("_")[0]
+#   order = sorting.split("_")[1]
   
-  if criteria=="calorie":
-    cursor = g.conn.execute("SELECT R.dish_id, R.dish_name, SUM(I.calorie*C.quantity) AS calorie FROM Recipe R, Contains C, Ingredients I WHERE R.dish_id=C.dish_id AND C.ingredient_id=I.ingredient_id GROUP BY R.dish_id ORDER BY calorie "+order+", R.dish_name "+order) 
-  elif criteria=="prep":
-    criteria="prep_time"
-    cursor = g.conn.execute("SELECT dish_id, dish_name, prep_time FROM Recipe ORDER BY prep_time "+order+", dish_name "+order) 
-  dishes = []
-  for result in cursor:
-    temp = dict()
-    temp['dish_id'] = result['dish_id']
-    temp['dish_name'] = result['dish_name']
-    temp[criteria] = result[criteria]
-    dishes.append(temp)
-  cursor.close()
-  dish = dict(dish = dishes)
-  return render_template("index.html", **dish)
+#   if criteria=="calorie":
+#     cursor = g.conn.execute("SELECT R.dish_id, R.dish_name, SUM(I.calorie*C.quantity) AS calorie FROM Recipe R, Contains C, Ingredients I WHERE R.dish_id=C.dish_id AND C.ingredient_id=I.ingredient_id GROUP BY R.dish_id ORDER BY calorie "+order+", R.dish_name "+order) 
+#   elif criteria=="prep":
+#     criteria="prep_time"
+#     cursor = g.conn.execute("SELECT dish_id, dish_name, prep_time FROM Recipe ORDER BY prep_time "+order+", dish_name "+order) 
+#   dishes = []
+#   for result in cursor:
+#     temp = dict()
+#     temp['dish_id'] = result['dish_id']
+#     temp['dish_name'] = result['dish_name']
+#     temp[criteria] = result[criteria]
+#     dishes.append(temp)
+#   cursor.close()
+#   dish = dict(dish = dishes)
+#   return render_template("index.html", **dish)
 
 
 @app.route('/view/<id>')
@@ -246,34 +248,59 @@ def view(id=None):
 #
 # Notice that the function name is another() rather than index()
 # The functions for each app.route need to have different names
-
-# Checking inputs with database of recipes (you dont need an account)
-@app.route('/recs', methods=['GET', 'POST'])
-def recs():
-  if request.method == 'POST':
-  spicy = g.conn.execute('SELECT * FROM Recipe WHERE is_spicy == True')
-  quick = g.conn.execute('SELECT * FROM Recipe WHERE prep_time < 30')
-  
-  snack = g.conn.execute('SELECT * FROM Recipe r, Contains c WHERE dish_id r.dis_id == c.dish_id and c.portion == 1', )
-  res = []
-  
-  return request.form.getlist('mycheckbox')
-
 # Checking inputs (username, password) with databases of users
+
 @app.route('/login', methods=['GET', 'POST'])
 def login():
-  
+  error = None
+  if request.method == 'POST':
+      if request.form['username'] != 'admin' or request.form['password'] != 'admin':
+          error = 'Invalid Credentials. Please try again.'
+      else:
+          return redirect(url_for('home'))
+  return render_template('login.html', error=error)
 
 # Adding new user credentials to the database
-@app.route('/signup', methods='POST')
+@app.route('/signup', methods=['POST'])
 def signup():
-  user_id = request.form['user_id']
-  name = request.form['name']
-  password = request.form['password']
-  email = request.form['email']
-  g.conn.execute('INSERT INTO Users VALUES (%s, %s, %s, %s)', user_id, name, password, email)
+  # user_id = request.form['user_id']
+  # name = request.form['name']
+  # password = request.form['password']
+  # email = request.form['email']
+  # g.conn.execute('INSERT INTO Users VALUES (%s, %s, %s, %s)', user_id, name, password, email)
   return render_template('signup.html')
 
+@app.route('/recs', methods=['POST'])
+def recs():
+  recommendation = request.form['recommendation']
+  return redirect('/sort/'+recommendation)
+
+@app.route('/recs/<recommendation>')
+def recs_result(recommendation=None):
+  spicy = recommendation.split("_")[0]
+  quick = recommendation.split("_")[1]
+  diet = recommendation.split("_")[2]
+  
+  if spicy=="is_spicy":
+    cursor = g.conn.execute('SELECT * FROM Recipe WHERE is_spicy == True') 
+  elif quick=="prep_time":
+    cursor = g.conn.execute('SELECT * FROM Recipe WHERE prep_time < 30')
+  elif diet=='calorie':
+    cursor = g.conn.execute("SELECT R.dish_id, R.dish_name, SUM(I.calorie*C.quantity) AS calorie FROM Recipe R, Contains C, Ingredients I WHERE R.dish_id=C.dish_id AND C.ingredient_id=I.ingredient_id AND calories < 600") 
+
+  dishes = []
+  for result in cursor:
+    temp = dict()
+    temp['dish_id'] = result['dish_id']
+    temp['dish_name'] = result['dish_name']
+    temp[spicy] = result[spicy]
+    temp[quick] = result[quick]
+    temp[diet] = result[diet]
+
+    dishes.append(temp)
+  cursor.close()
+  dish = dict(dish = dishes)
+  return render_template("recs.html", **dish)
 
 if __name__ == "__main__":
   import click
@@ -282,7 +309,7 @@ if __name__ == "__main__":
   @click.option('--debug', is_flag=True)
   @click.option('--threaded', is_flag=True)
   @click.argument('HOST', default='0.0.0.0')
-  @click.argument('PORT', default=8112, type=int)
+  @click.argument('PORT', default=8110, type=int)
   def run(debug, threaded, host, port):
     """
     This function handles command line parameters.
