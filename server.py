@@ -319,16 +319,19 @@ def signup():
 @app.route('/recs', methods=['POST'])
 def recs():
   recommendation = request.form['recommendation']
-  return redirect('/sort/'+recommendation)
+  return redirect('/recs/'+recommendation)
 
 @app.route('/recs/<recommendation>')
 def recs_result(recommendation=None):
   spicy = recommendation.split("_")[0]
   quick = recommendation.split("_")[1]
   diet = recommendation.split("_")[2]
+  liked = recommendation.split("_")[2]
   
   if spicy=="is_spicy":
     cursor = g.conn.execute('SELECT * FROM Recipe WHERE is_spicy == True') 
+  elif liked:
+    cursor = g.conn.execute('SELECT R.dish_id, R.dish_name, R.instructions, R.prep_time, R.is_spicy FROM Recipe r, Likes l WHERE r.dish_id==l.dish_id')
   elif quick=="prep_time":
     cursor = g.conn.execute('SELECT * FROM Recipe WHERE prep_time < 30')
   elif diet=='calorie':
