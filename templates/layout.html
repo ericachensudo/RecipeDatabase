@@ -1,0 +1,37 @@
+<html>
+  <style>
+    body{ 
+      font-size: 15pt;
+      font-family: arial;
+    }
+
+    ul {
+  list-style-type: none;
+  margin: 0;
+  padding: 0;
+}
+  </style>
+
+
+<body>
+  <title>Recipe Book</title>
+
+  <h1>Recipe Book</h1>
+  <ul>
+    <li><a href="/">Home</a></li>
+    <li><a href="/login">Log In</a></li>
+    <li><a href="/recommendations">Recommend</a></li>
+  </ul>
+
+
+  <div class="container">
+    {% block content %}
+    {% endblock %}
+
+  </div>
+  
+
+</body>
+
+
+</html>
