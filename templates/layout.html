@@ -1,0 +1,51 @@
+<html>
+  <style>
+    body{ 
+      font-size: 15pt;
+      font-family: arial;
+    }
+
+    ul{
+      list-style-type: none;
+      margin: 0;
+      padding: 0;
+    }
+
+    .nav_bar{
+      padding: 10px;
+      margin: 0;
+      background-color: lightgray;
+      color: black;
+      border-radius: 10px;
+    }
+
+    a:link { text-decoration: none; }
+
+  </style>
+
+
+<body>
+  <title>Recipe Book</title>
+
+  <h1>Recipe Book</h1>
+  <div >
+    <a class="nav_bar" href="/">Home</a>
+    <a class="nav_bar" href="/login">Log In</a>
+    <a class="nav_bar" href="/recommendations">Recommend</a>
+    <form class="nav_bar" method="POST" action="/search">
+      <input type="text" name="keyword"> <input type="submit" value="Search">
+    </form>
+  </div>
+
+
+  <div>
+    {% block content %}
+    {% endblock %}
+
+  </div>
+  
+
+</body>
+
+
+</html>

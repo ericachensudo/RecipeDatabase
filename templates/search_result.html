@@ -1,0 +1,14 @@
+{% extends "layout.html" %}
+
+{% block content %}
+
+<body>
+  <h2>Recipe List</h2>
+  <ul class="recipe_list">
+    {% for n in dish %}
+    <li><a href="/view/{{n.dish_id}}">{{n.dish_name}}</a></li>
+    {% endfor %}
+  </ul>
+</body>
+
+{% endblock %}
