@@ -9,7 +9,7 @@
     <input class="invisible" type="text" name="id" value="{{info.dish_id}}"> <input type="submit" value="Like">
   </form>
 
-  <h3>Chef: {{info.auth_name}}</h3>
+  <h3>Chef: <a href="/view_auth/{{info.auth_id}}">{{info.auth_name}}</a></h3>
   <form method="POST" action="/follow">
     <input class="invisible" type="text" name="id" value="{{info.auth_id}}"> <input type="submit" value="Follow">
   </form>

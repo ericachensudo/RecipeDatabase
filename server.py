@@ -251,6 +251,27 @@ def view(id=None):
 
   return render_template('view.html',**info,**ingredient)
 
+@app.route('/view_auth/<auth_id>')
+def view_auth(auth_id=None):
+  infos = dict()
+  cursor = g.conn.execute("SELECT * FROM Author WHERE auth_id='"+auth_id+"'")
+  result = cursor.fetchone()
+  infos['auth_id'] = auth_id
+  infos['auth_name'] = result['auth_name']
+  infos['auth_email'] = result['auth_email']
+  cursor = g.conn.execute("SELECT R.dish_id, R.dish_name FROM Author A, Writes W, Recipe R WHERE A.auth_id=W.auth_id AND W.dish_id=R.dish_id AND A.auth_id='"+auth_id+"'")
+  dishes = []
+  for result in cursor:
+    temp = dict()
+    temp['dish_id'] = result['dish_id']
+    temp['dish_name'] = result['dish_name']
+    dishes.append(temp)
+  cursor.close()
+  info = dict(info=infos)
+  dish = dict(dish=dishes)
+  return render_template('view_auth.html', **info, **dish)
+
+
 #
 # This is an example of a different path.  You can see it at:
 #
