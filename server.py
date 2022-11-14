@@ -211,8 +211,9 @@ def view(id=None):
   infos['cuisine'] = content['region_name']
   cursor.close()
 
-  cursor = g.conn.execute("SELECT A.auth_name FROM Recipe R, Writes W, Author A WHERE W.auth_id=A.auth_id and W.dish_id=R.dish_id and R.dish_id='"+id+"'") 
+  cursor = g.conn.execute("SELECT A.auth_id, A.auth_name FROM Recipe R, Writes W, Author A WHERE W.auth_id=A.auth_id and W.dish_id=R.dish_id and R.dish_id='"+id+"'") 
   content = cursor.fetchone()
+  infos['auth_id'] = content['auth_id']
   infos['auth_name'] = content['auth_name']
   cursor.close()
 
@@ -262,7 +263,7 @@ def view(id=None):
 @app.route('/login', methods=['POST'])
 def login():
   global user
-  userid = request.form['userid']
+  userid = request.form['id']
   pswd = request.form['pswd']
   cursor = g.conn.execute("SELECT * FROM Users WHERE user_id='"+userid+"' AND user_password='"+pswd+"'")
   content = cursor.fetchone()
@@ -277,8 +278,35 @@ def login():
 
 @app.route('/login_page')
 def login_page():
-  global user
-  return render_template("login.html")
+  login_type = "User"
+  login_link = "/login"
+  login_info = {"login_type": login_type, "login_link": login_link}
+  login = dict(login=login_info)
+  return render_template("login.html", **login)
+
+@app.route('/auth_login', methods=['POST'])
+def auth_login():
+  global author
+  authid = request.form['id']
+  pswd = request.form['pswd']
+  cursor = g.conn.execute("SELECT * FROM Author WHERE auth_id='"+authid+"' AND auth_password='"+pswd+"'")
+  content = cursor.fetchone()
+  if content:
+    author['id'] = content['auth_id']
+    author['name'] = content['auth_name']
+    return redirect("/collection/"+author['id'])
+  else:
+    error_msg = "Incorrect author id and password combination."
+    error = dict(error=error_msg)
+    return render_template("login.html", **error)
+
+@app.route('/auth_login_page')
+def auth_login_page():
+  login_type = "Author"
+  login_link = "/auth_login"
+  login_info = {"login_type": login_type, "login_link": login_link}
+  login = dict(login=login_info)
+  return render_template("login.html", **login)
 
 @app.route('/tocollection')
 def tocollection():
@@ -305,6 +333,32 @@ def like():
   dish_id = request.form['id']
   g.conn.execute('INSERT INTO likes VALUES (%s, %s)', user['id'], dish_id)
   return redirect("/collection/"+user['id'])
+
+@app.route('/tofollowing')
+def tofollowing():
+  global user
+  userid = user['id']
+  return redirect("/following/"+user['id'])
+  
+@app.route('/following/<userid>')
+def following(userid=None):
+  cursor = g.conn.execute("SELECT A.auth_id, A.auth_name FROM Author A, Follows F, Users U WHERE F.user_id=U.user_id AND A.auth_id=F.auth_id AND U.user_id='"+userid+"'")
+  authors = []
+  for result in cursor:
+    temp = dict()
+    temp['auth_id'] = result['auth_id']
+    temp['auth_name'] = result['auth_name']
+    authors.append(temp)
+  cursor.close()
+  author = dict(author = authors)
+  return render_template("following.html", **author)
+
+@app.route('/follow', methods=['POST'])
+def follow():
+  global user
+  auth_id = request.form['id']
+  g.conn.execute('INSERT INTO follows VALUES (%s, %s)', user['id'], auth_id)
+  return redirect("/following/"+user['id'])
 
 # Adding new user credentials to the database
 @app.route('/signup', methods=['POST'])

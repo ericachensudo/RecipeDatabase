@@ -12,10 +12,10 @@
     </head><body>
         
         <div class="container">
-            <h1>Please login</h1>
+            <h1>{{login.login_type}} login</h1>
             <br>
-            <form method="POST" action="/login">
-              <input type="text" placeholder="User ID" name="userid">
+            <form method="POST" action="{{login.login_link}}">
+              <input type="text" placeholder="User ID" name="id">
                <input type="pswd" placeholder="Password" name="pswd">
               <input class="btn btn-default" type="submit" value="Login">
             </form>
