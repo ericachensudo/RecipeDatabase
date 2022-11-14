@@ -316,35 +316,60 @@ def signup():
   # g.conn.execute('INSERT INTO Users VALUES (%s, %s, %s, %s)', user_id, name, password, email)
   return render_template('signup.html')
 
+@app.route('/recs_page')
+def recs_page():
+  return render_template('recs.html')
+
 @app.route('/recs', methods=['POST'])
 def recs():
-  recommendation = request.form['recommendation']
-  return redirect('/recs/'+recommendation)
+  global user
+  recommendation = []
+  for key in request.form:
+    recommendation.append(request.form[key])
+  user['recommendation'] = recommendation
+  return redirect('/recs_result')
 
-@app.route('/recs/<recommendation>')
+@app.route('/recs_result')
 def recs_result(recommendation=None):
-  spicy = recommendation.split("_")[0]
-  quick = recommendation.split("_")[1]
-  diet = recommendation.split("_")[2]
-  liked = recommendation.split("_")[2]
-  
-  if spicy=="is_spicy":
-    cursor = g.conn.execute('SELECT * FROM Recipe WHERE is_spicy == True') 
-  elif liked:
-    cursor = g.conn.execute('SELECT R.dish_id, R.dish_name, R.instructions, R.prep_time, R.is_spicy FROM Recipe r, Likes l WHERE r.dish_id==l.dish_id')
-  elif quick=="prep_time":
-    cursor = g.conn.execute('SELECT * FROM Recipe WHERE prep_time < 30')
-  elif diet=='calorie':
-    cursor = g.conn.execute("SELECT R.dish_id, R.dish_name, SUM(I.calorie*C.quantity) AS calorie FROM Recipe R, Contains C, Ingredients I WHERE R.dish_id=C.dish_id AND C.ingredient_id=I.ingredient_id AND calories < 600") 
+  global user
+  print(user['recommendation'])
+  query = ""
+
+  spicy = 'is_spicy'
+  quick = 'prep_time'
+  diet = 'calorie'
+  liked = 'liked'
+
+  s = 'SELECT * FROM Recipe WHERE is_spicy = True'
+  q = 'SELECT R.dish_id, R.dish_name, R.instructions, R.prep_time, R.is_spicy FROM Recipe r, Likes l WHERE r.dish_id==l.dish_id'
+  d = 'SELECT * FROM Recipe WHERE prep_time < 30'
+  l = "SELECT R.dish_id, R.dish_name, SUM(I.calorie*C.quantity) AS calorie FROM Recipe R, Contains C, Ingredients I WHERE R.dish_id=C.dish_id AND C.ingredient_id=I.ingredient_id AND calorie < 600 GROUP BY R.dish_id"
+
+  plus = ' INTERSECT '
+  res = ''
+  counter = 0
+
+  for n in user['recommendation']:
+    if counter>0:
+      res += plus
+    if n == spicy:
+      res += s
+    elif n == quick:
+      res += q
+    elif n == diet:
+      res += d
+    elif n == liked:
+      res += l
+    counter +=1
+    
+
+  cursor = g.conn.execute(res)
 
   dishes = []
   for result in cursor:
     temp = dict()
     temp['dish_id'] = result['dish_id']
     temp['dish_name'] = result['dish_name']
-    temp[spicy] = result[spicy]
-    temp[quick] = result[quick]
-    temp[diet] = result[diet]
 
     dishes.append(temp)
   cursor.close()
