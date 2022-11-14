@@ -341,9 +341,9 @@ def recs_result(recommendation=None):
   liked = 'liked'
 
   s = 'SELECT * FROM Recipe WHERE is_spicy = True'
-  q = 'SELECT R.dish_id, R.dish_name, R.instructions, R.prep_time, R.is_spicy FROM Recipe r, Likes l WHERE r.dish_id==l.dish_id'
-  d = 'SELECT * FROM Recipe WHERE prep_time < 30'
-  l = "SELECT R.dish_id, R.dish_name, SUM(I.calorie*C.quantity) AS calorie FROM Recipe R, Contains C, Ingredients I WHERE R.dish_id=C.dish_id AND C.ingredient_id=I.ingredient_id AND calorie < 600 GROUP BY R.dish_id"
+  l = 'SELECT R.dish_id, R.dish_name, R.instructions, R.prep_time, R.is_spicy FROM Recipe r, Likes l WHERE r.dish_id=l.dish_id'
+  q = 'SELECT * FROM Recipe WHERE prep_time < 30'
+  d = "SELECT R.dish_id, R.dish_name, SUM(I.calorie*C.quantity) AS calories FROM Recipe R, Contains C, Ingredients I WHERE R.dish_id=C.dish_id AND C.ingredient_id=I.ingredient_id AND calorie < 600 GROUP BY R.dish_id"
 
   plus = ' INTERSECT '
   res = ''
@@ -374,7 +374,7 @@ def recs_result(recommendation=None):
     dishes.append(temp)
   cursor.close()
   dish = dict(dish = dishes)
-  return render_template("recs.html", **dish)
+  return render_template("index.html", **dish)
 
 if __name__ == "__main__":
   import click
