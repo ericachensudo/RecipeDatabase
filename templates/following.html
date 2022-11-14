@@ -3,10 +3,10 @@
 {% block content %}
 
 <body>
-  <h2>My Collection</h2>
+  <h2>My Following</h2>
   <ul class="recipe_list">
-    {% for n in dish %}
-    <li><a href="/view/{{n.dish_id}}">{{n.dish_name}}</a></li>
+    {% for n in author %}
+    <li><a href="/view_auth/{{n.auth_id}}">{{n.auth_name}}</a></li>
     {% endfor %}
   </ul>
 
