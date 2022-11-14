@@ -376,6 +376,55 @@ def recs_result(recommendation=None):
   dish = dict(dish = dishes)
   return render_template("recs.html", **dish)
 
+@app.route('/add_page', methods=['POST'])
+def add_page():
+  return render_template("add_recipe.html")
+
+@app.route('/add_recipe', methods=['POST'])
+def add_recipe():
+
+  dish_id = g.conn.execute('SELECT MAX(ASCII(dish_id)) FROM Recipe')
+  dish_name = request.form['dish_name']
+  instructions = request.form['instructions']
+  prep_time = request.form['prep_time']
+  is_spicy = request.form['is_spicy']
+  g.conn.execute('INSERT INTO Recipe VALUES (%s, %s, %s, %s, %s)', dish_id, dish_name, instructions, prep_time, is_spicy)
+
+  ingredient_id = g.conn.execute('SELECT MAX(ASCII(ingredient_id)) FROM Ingredients')
+  ingredient_name = request.form['ingredient_name']
+  protein = request.form['protein']
+  carb = request.form['carb']
+  fat = request.form['fat']
+  calorie = request.form['calorie']
+  units = request.form['units']
+  g.conn.execute('INSERT INTO Ingredients VALUES (%s, %s, %s, %s, %s, %s, %s)', ingredient_id, ingredient_name, protein, carb, fat, calorie, units)
+
+  portion = request.form['portion']
+  g.conn.execute('INSERT INTO Contains VALUES (%s, %s, %s)', dish_id, ingredient_id, portion)
+
+  region_name = request.form['region_name']
+  g.conn.execute('INSERT INTO Cuisine VALUES (%s, %s)', cuisine_id, region_name)
+
+  cuisine_id = g.conn.execute('SELECT MAX(ASCII(cuisine_id)) FROM Type_Of')
+  g.conn.execute('INSERT INTO Type_Of VALUES (%s, %s)', dish_id, cuisine_id)
+
+  cookware_name = request.form['cookware_name']
+  is_electric = request.form['is_electric']
+  g.conn.execute('INSERT INTO Cookware VALUES (%s, %s, %s)', cookware_id, cookware_name, is_electric)
+
+  cookware_id = g.conn.execute('SELECT MAX(ASCII(cookware_id)) FROM Utilizes')
+  g.conn.execute('INSERT INTO Utilizes VALUES (%s, %s)', dish_id, cookware_id)
+
+  auth_name = request.form['auth_name']
+  auth_email = request.form['auth_email']
+  auth_password = request.form['auth_password']
+  g.conn.execute('INSERT INTO Author VALUES (%s, %s, %s)', auth_id, auth_name, auth_email, auth_password)
+
+  auth_id = g.conn.execute('SELECT MAX(ASCII(auth_id)) FROM Writes')
+  g.conn.execute('INSERT INTO Writes VALUES (%s, %s)',auth_id, dish_id)
+
+  return render_template('/add_recipe.html')
+
 if __name__ == "__main__":
   import click
 
