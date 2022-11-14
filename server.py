@@ -447,8 +447,12 @@ def recs_result(recommendation=None):
 
     dishes.append(temp)
   cursor.close()
+  if not dishes:
+    temp = dict()
+    temp['dish_id'] = "d0"
+    dishes.append(temp)
   dish = dict(dish = dishes)
-  return render_template("index.html", **dish)
+  return render_template("recs.html", **dish)
 
 @app.route('/add_page')
 def add_page():
