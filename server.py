@@ -160,10 +160,10 @@ def search_result(keyword=None):
   return render_template("search_result.html", **dish)
 
 
-# @app.route('/sort', methods=['POST'])
-# def sort():
-#   sorting = request.form['sorting']
-#   return redirect('/sort/'+sorting)
+@app.route('/sort', methods=['POST'])
+def sort():
+ sorting = request.form['sorting']
+ return redirect('/sort/'+sorting)
 
 
 @app.route('/sort/<sorting>')
@@ -407,7 +407,6 @@ def recs():
 @app.route('/recs_result')
 def recs_result(recommendation=None):
   global user
-  print(user['recommendation'])
   query = ""
 
   spicy = 'is_spicy'
@@ -415,11 +414,10 @@ def recs_result(recommendation=None):
   diet = 'calorie'
   liked = 'liked'
 
-  s = 'SELECT * FROM Recipe WHERE is_spicy = True'
-  l = 'SELECT R.dish_id, R.dish_name, R.instructions, R.prep_time, R.is_spicy FROM Recipe r, Likes l WHERE r.dish_id=l.dish_id'
-  q = 'SELECT * FROM Recipe WHERE prep_time < 30'
-  #d = "SELECT R.dish_id, R.dish_name, SUM(I.calorie*C.quantity) < 600 FROM Recipe R, Contains C, Ingredients I WHERE R.dish_id=C.dish_id AND C.ingredient_id=I.ingredient_id AND 600 < (SELECT R.dish_id, SUM(SUM(I.calorie*C.quantity)))GROUP BY R.dish_id"
-  d = "SELECT R.dish_id, R.dish_name FROM Recipe R, Contains C, Ingredients I WHERE R.dish_id=C.dish_id AND C.ingredient_id=I.ingredient_id AND 600 < (SELECT R.dish_id, SUM(SUM(I.calorie*C.quantity) FROM Recipe R, Contains C, Ingredients I WHERE R.dish_id=C.dish_id AND C.ingredient_id=I.ingredient_id GROUP BY R.dish_id)))"
+  s = 'SELECT dish_id, dish_name FROM Recipe WHERE is_spicy = True'
+  l = 'SELECT R.dish_id, R.dish_name FROM Recipe r, Likes l WHERE r.dish_id=l.dish_id GROUP BY R.dish_id HAVING COUNT(L.dish_id)>1'
+  q = 'SELECT dish_id, dish_name FROM Recipe WHERE prep_time < 30'
+  d = "SELECT R.dish_id, R.dish_name FROM Recipe R, Contains C, Ingredients I WHERE R.dish_id=C.dish_id AND C.ingredient_id=I.ingredient_id GROUP BY R.dish_id HAVING SUM(I.calorie*C.quantity)<600"
 
   plus = ' INTERSECT '
   res = ''
@@ -496,7 +494,8 @@ def add_recipe():
 
   auth_name = request.form['auth_name']
   auth_email = request.form['auth_email']
-  g.conn.execute('INSERT INTO Author VALUES (%s, %s, %s)', auth_id, auth_name, auth_email)
+  auth_password = request.form['auth_password']
+  g.conn.execute('INSERT INTO Author VALUES (%s, %s, %s)', auth_id, auth_name, auth_email, auth_password)
 
   auth_id = g.conn.execute('SELECT MAX(ASCII(auth_id)) FROM Writes')
   g.conn.execute('INSERT INTO Writes VALUES (%s, %s)',auth_id, dish_id)
