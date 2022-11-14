@@ -418,7 +418,8 @@ def recs_result(recommendation=None):
   s = 'SELECT * FROM Recipe WHERE is_spicy = True'
   l = 'SELECT R.dish_id, R.dish_name, R.instructions, R.prep_time, R.is_spicy FROM Recipe r, Likes l WHERE r.dish_id=l.dish_id'
   q = 'SELECT * FROM Recipe WHERE prep_time < 30'
-  d = "SELECT R.dish_id, R.dish_name, SUM(I.calorie*C.quantity) AS calories FROM Recipe R, Contains C, Ingredients I WHERE R.dish_id=C.dish_id AND C.ingredient_id=I.ingredient_id AND calorie < 600 GROUP BY R.dish_id"
+  #d = "SELECT R.dish_id, R.dish_name, SUM(I.calorie*C.quantity) < 600 FROM Recipe R, Contains C, Ingredients I WHERE R.dish_id=C.dish_id AND C.ingredient_id=I.ingredient_id AND 600 < (SELECT R.dish_id, SUM(SUM(I.calorie*C.quantity)))GROUP BY R.dish_id"
+  d = "SELECT R.dish_id, R.dish_name FROM Recipe R, Contains C, Ingredients I WHERE R.dish_id=C.dish_id AND C.ingredient_id=I.ingredient_id AND 600 < (SELECT R.dish_id, SUM(SUM(I.calorie*C.quantity) FROM Recipe R, Contains C, Ingredients I WHERE R.dish_id=C.dish_id AND C.ingredient_id=I.ingredient_id GROUP BY R.dish_id)))"
 
   plus = ' INTERSECT '
   res = ''
@@ -451,16 +452,19 @@ def recs_result(recommendation=None):
   dish = dict(dish = dishes)
   return render_template("index.html", **dish)
 
-@app.route('/add_page', methods=['POST'])
+@app.route('/add_page')
 def add_page():
   return render_template("add_recipe.html")
 
 @app.route('/add_recipe', methods=['POST'])
 def add_recipe():
+  print(request.form)
+  instructions = request.form['instructions']
+  print(instructions)
 
   dish_id = g.conn.execute('SELECT MAX(ASCII(dish_id)) FROM Recipe')
   dish_name = request.form['dish_name']
-  instructions = request.form['instructions']
+  
   prep_time = request.form['prep_time']
   is_spicy = request.form['is_spicy']
   g.conn.execute('INSERT INTO Recipe VALUES (%s, %s, %s, %s, %s)', dish_id, dish_name, instructions, prep_time, is_spicy)
