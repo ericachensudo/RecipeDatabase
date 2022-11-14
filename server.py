@@ -492,8 +492,7 @@ def add_recipe():
 
   auth_name = request.form['auth_name']
   auth_email = request.form['auth_email']
-  auth_password = request.form['auth_password']
-  g.conn.execute('INSERT INTO Author VALUES (%s, %s, %s)', auth_id, auth_name, auth_email, auth_password)
+  g.conn.execute('INSERT INTO Author VALUES (%s, %s, %s)', auth_id, auth_name, auth_email)
 
   auth_id = g.conn.execute('SELECT MAX(ASCII(auth_id)) FROM Writes')
   g.conn.execute('INSERT INTO Writes VALUES (%s, %s)',auth_id, dish_id)
