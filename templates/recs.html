@@ -14,9 +14,13 @@
 
         <h2>Recipe List</h2>
         <ul class="recipe_list">
-          {% for n in dish %}
-          <li><a href="/recs/{{n.dish_id}}">{{n.dish_name}}</a></li>
-          {% endfor %}
+            {% for n in dish %}
+            {% if n.dish_id == "d0" %}
+              <div>Sorry, no results meet your criteria.</div>
+            {% else %}
+            <li><a href="/view/{{n.dish_id}}">{{n.dish_name}}</a></li>
+            {% endif %}
+            {% endfor %}
         </ul>
 
     </body>
