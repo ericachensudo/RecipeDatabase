@@ -143,10 +143,6 @@ def search():
   keyword = request.form['keyword']
   if not keyword:
     return redirect('/')
-  return redirect('/search/'+keyword)
-
-@app.route('/search/<keyword>')
-def search_result(keyword=None):
   keyword = keyword.lower()
   cursor = g.conn.execute("SELECT R.dish_id, R.dish_name FROM Recipe R WHERE LOWER(R.dish_name) LIKE '%%"+keyword+"%%'") 
   dishes = []
@@ -156,18 +152,17 @@ def search_result(keyword=None):
     temp['dish_name'] = result['dish_name']
     dishes.append(temp)
   cursor.close()
+  if not dishes:
+    temp = dict()
+    temp['dish_id'] = "d0"
+    dishes.append(temp)
   dish = dict(dish = dishes)
-  return render_template("search_result.html", **dish)
+  return render_template("index.html", **dish)
 
 
 @app.route('/sort', methods=['POST'])
 def sort():
- sorting = request.form['sorting']
- return redirect('/sort/'+sorting)
-
-
-@app.route('/sort/<sorting>')
-def sort_result(sorting=None):
+  sorting = request.form['sorting']
   global keyword
   keyword = keyword.lower()
   criteria = sorting.split("_")[0]
@@ -272,14 +267,6 @@ def view_auth(auth_id=None):
   return render_template('view_auth.html', **info, **dish)
 
 
-#
-# This is an example of a different path.  You can see it at:
-#
-#     localhost:8111/another
-#
-# Notice that the function name is another() rather than index()
-# The functions for each app.route need to have different names
-
 # Checking inputs (username, password) with databases of users
 @app.route('/login', methods=['POST'])
 def login():
@@ -291,7 +278,8 @@ def login():
   if content:
     user['id'] = content['user_id']
     user['name'] = content['user_name']
-    return redirect("/collection/"+user['id'])
+    #return redirect("/collection/"+user['id'])
+    return redirect("/")
   else:
     error_msg = "Incorrect user id and password combination."
     error = dict(error=error_msg)
@@ -402,12 +390,6 @@ def recs():
   for key in request.form:
     recommendation.append(request.form[key])
   user['recommendation'] = recommendation
-  return redirect('/recs_result')
-
-@app.route('/recs_result')
-def recs_result(recommendation=None):
-  global user
-  query = ""
 
   spicy = 'is_spicy'
   quick = 'prep_time'
@@ -436,15 +418,12 @@ def recs_result(recommendation=None):
       res += l
     counter +=1
     
-
   cursor = g.conn.execute(res)
-
   dishes = []
   for result in cursor:
     temp = dict()
     temp['dish_id'] = result['dish_id']
     temp['dish_name'] = result['dish_name']
-
     dishes.append(temp)
   cursor.close()
   if not dishes:
@@ -453,6 +432,7 @@ def recs_result(recommendation=None):
     dishes.append(temp)
   dish = dict(dish = dishes)
   return render_template("recs.html", **dish)
+
 
 @app.route('/add_page')
 def add_page():
