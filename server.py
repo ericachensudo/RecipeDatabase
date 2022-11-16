@@ -136,6 +136,7 @@ def index():
 
   return render_template("index.html", **dish)
 
+# -----------------------------------------------------------------------------------------------
 
 @app.route('/search', methods=['POST'])
 def search():
@@ -167,6 +168,7 @@ def search():
   dish = dict(dish = dishes)
   return render_template("index.html", **dish)
 
+# -----------------------------------------------------------------------------------------------
 
 @app.route('/sort', methods=['POST'])
 def sort():
@@ -192,6 +194,7 @@ def sort():
   dish = dict(dish = dishes)
   return render_template("index.html", **dish)
 
+# -----------------------------------------------------------------------------------------------
 
 @app.route('/view/<id>')
 def view(id=None):
@@ -274,14 +277,14 @@ def view_auth(auth_id=None):
   dish = dict(dish=dishes)
   return render_template('view_auth.html', **info, **dish)
 
+# -----------------------------------------------------------------------------------------------
 
-# Checking inputs (username, password) with databases of users
 @app.route('/login', methods=['POST'])
 def login():
   global user
   userid = request.form['id']
   pswd = request.form['pswd']
-  cursor = g.conn.execute("SELECT * FROM Users WHERE user_id='"+userid+"' AND user_password='"+pswd+"'")
+  cursor = g.conn.execute("SELECT * FROM Users WHERE user_id=%s AND user_password=%s", userid, pswd)
   content = cursor.fetchone()
   if content:
     user['id'] = content['user_id']
@@ -293,6 +296,22 @@ def login():
     error = dict(error=error_msg)
     return render_template("login.html", **error)
 
+# def login():
+#   if request.method == 'POST':
+#     userid = request.form.get['id']
+#     pswd = request.form.get['pswd']
+#     cursor = g.conn.execute("SELECT user_id FROM Users WHERE user_id = %s, pswd = %s, userid, pswd")
+#     users = []
+      
+#     for id in cursor:
+#       users.append(users[0])
+#       cursor.close()
+#       context = disct(data = users)
+#       if len(users) != 0:
+#         return render_template("index.html", boolean=True)
+#       else:
+#         return render_template(login.html, boolean=True)
+
 @app.route('/login_page')
 def login_page():
   login_type = "User"
@@ -300,6 +319,8 @@ def login_page():
   login_info = {"login_type": login_type, "login_link": login_link}
   login = dict(login=login_info)
   return render_template("login.html", **login)
+
+# -----------------------------------------------------------------------------------------------
 
 @app.route('/auth_login', methods=['POST'])
 def auth_login():
@@ -325,6 +346,8 @@ def auth_login_page():
   login = dict(login=login_info)
   return render_template("login.html", **login)
 
+# -----------------------------------------------------------------------------------------------
+
 @app.route('/tocollection')
 def tocollection():
   global user
@@ -344,12 +367,16 @@ def collection(userid=None):
   dish = dict(dish = dishes)
   return render_template("collection.html", **dish)
 
+# -----------------------------------------------------------------------------------------------
+
 @app.route('/like', methods=['POST'])
 def like():
   global user
   dish_id = request.form['id']
   g.conn.execute('INSERT INTO likes VALUES (%s, %s)', user['id'], dish_id)
   return redirect("/collection/"+user['id'])
+
+# -----------------------------------------------------------------------------------------------
 
 @app.route('/tofollowing')
 def tofollowing():
@@ -377,15 +404,22 @@ def follow():
   g.conn.execute('INSERT INTO follows VALUES (%s, %s)', user['id'], auth_id)
   return redirect("/following/"+user['id'])
 
-# Adding new user credentials to the database
+# -----------------------------------------------------------------------------------------------
+
+@app.route('/signup_page')
+def signup_page():
+  return render_template('signup.html')
+
 @app.route('/signup', methods=['POST'])
 def signup():
-  # user_id = request.form['user_id']
-  # name = request.form['name']
-  # password = request.form['password']
-  # email = request.form['email']
-  # g.conn.execute('INSERT INTO Users VALUES (%s, %s, %s, %s)', user_id, name, password, email)
+  user_id = request.form['user_id']
+  name = request.form['name']
+  password = request.form['password']
+  email = request.form['email']
+  g.conn.execute('INSERT INTO Users VALUES (%s, %s, %s, %s)', user_id, name, password, email)
   return render_template('signup.html')
+
+# -----------------------------------------------------------------------------------------------
 
 @app.route('/recs_page')
 def recs_page():
@@ -441,6 +475,7 @@ def recs():
   dish = dict(dish = dishes)
   return render_template("recs.html", **dish)
 
+# -----------------------------------------------------------------------------------------------
 
 @app.route('/add_page')
 def add_page():
@@ -493,6 +528,8 @@ def add_recipe():
   g.conn.execute('INSERT INTO Writes VALUES (%s, %s)',auth_id, dish_id)
 
   return render_template('/add_recipe.html')
+
+# -----------------------------------------------------------------------------------------------
 
 if __name__ == "__main__":
   import click

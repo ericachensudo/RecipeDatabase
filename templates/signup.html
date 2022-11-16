@@ -1,4 +1,3 @@
-{% extends "layout.html" %}
 
 {% block content %}
 
@@ -6,10 +5,11 @@
         <h1>Please register your information</h1>
 
         <form method="POST" action="/signup">
-            <p> User ID: <input type="text" name="user_id"> <input type="submit" value="Add EID"></p>
-            <p> Name: <input type="text" name="name"> <input type="submit" value="Add Name"></p>
-            <p> Password: <input type="text" name="password"> <input type="submit" value="Add Password"></p>
-            <p> Email: <input type="text" name="email"> <input type="submit" value="Add Email"></p>
+            User ID: <input type="text" name="user_id" value="Add EID">
+            Name: <input type="text" name="name" value="Add Name">
+            Password: <input type="text" name="password" value="Add Password">
+            Email: <input type="text" name="email" value="Add Email">
+            <input type="submit" value="Signup">
         </form>
     
     </body>
