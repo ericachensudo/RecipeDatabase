@@ -4,6 +4,9 @@
 
 
     <body>
+        <h2>Recipe List</h2>
+        
+
         <form method="POST" action="/recs">
             Spicy <input type="checkbox" value= "is_spicy" name="preference1">
             Quick <input type="checkbox" value="prep_time" name="preference2">
@@ -11,8 +14,6 @@
             Liked <input type="checkbox" value="liked" name="preference4">
         <input type="submit" value="Recommendations">
         </form>
-
-        <h2>Recipe List</h2>
         <ul class="recipe_list">
             {% for n in dish %}
             {% if n.dish_id == "d0" %}
@@ -22,6 +23,5 @@
             {% endif %}
             {% endfor %}
         </ul>
-
     </body>
 {% endblock %}
