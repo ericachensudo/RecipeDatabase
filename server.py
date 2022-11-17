@@ -314,11 +314,11 @@ def login():
 
 @app.route('/login_page')
 def login_page():
-  login_type = "User"
-  login_link = "/login"
-  login_info = {"login_type": login_type, "login_link": login_link}
-  login = dict(login=login_info)
-  return render_template("login.html", **login)
+  #login_type = "User"
+  #login_link = "/login"
+  #login_info = {"login_type": login_type, "login_link": login_link}
+  #login = dict(login=login_info)
+  return render_template("login.html")
 
 # -----------------------------------------------------------------------------------------------
 
