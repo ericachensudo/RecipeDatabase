@@ -3,23 +3,17 @@
 {% block content %}
 
     <body>
-        <form method="POST" action="/add_page">
+        <h1> Add a Recipe</h1>
+
+        <form method="POST" action="/add_recipe">
 
 <!-- keep track of last author ID in system and increment -->
         <p> Author Name: <input type="text" placeholder="Enter First & Last Name" name="auth_name"> </p>
         <p> Author Email: <input type="text" placeholder="Enter Email" name="auth_email"> </p>
     
-<!-- keep track of last ingredient ID in system and increment -->
-        <p> Ingredient Name: <input placeholder="Name of Ingredient" type="text" name="ingredient_name"> </p>
-        <p> Protein: <input type="text" placeholder="Measurement in Grams" name="protein"> </p>
-        <p> Carb: <input type="text" placeholder="Measurement in Grams" name="carb"> </p>
-        <p> Fat: <input type="text" placeholder="Measurement in Grams" name="fat"> </p>
-        <p> Calorie: <input type="text" placeholder="Number of Calorie" name="calorie"></p>
-        <p> Units: <input type="text" placeholder="Measurement in Grams" name="units"> </p>
-
 <!-- keep track of last cookware ID in system and increment -->
         <p> Cookware Name: <input type="text" placeholder="Name of cookware" name="cookware_name"> </p>
-        <p> Is the cookware electric: <input type="text" placeholder="True or False" name="is_electric"> </p>
+        <p> Is the cookware electric: <input type="radio" name="is_electric"> </p>
 
 <!-- keep track of last cuisine ID in system and increment -->
         <p> Region of origin: <input type="text" placeholder="Name of Region" name="region_name"> </p>
@@ -28,7 +22,7 @@
         <p> Dish Name: <input type="text" placeholder="Name of Dish" name="dish_name"> </p>
         <p> Instructions: <input type="text" placeholder="Description" name="instructions"> </p>
         <p> Estimated prep time: <input type="text" placeholder="Prep Time in Minutes" name="prep_time"> </p>
-        <p> Is this dish spicy: <input type="text" placeholder="True or False" name="is_spicy"> </p>
+        <p> Is this dish spicy: <input type="radio" name="is_spicy"> </p>
         <p> Portion size: <input type="text" placeholder="Serving Size Number" name="portion"> </p>
         
         <input class="btn btn-default" type="submit" value="Add New Recipe">
