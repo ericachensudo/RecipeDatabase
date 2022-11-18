@@ -21,7 +21,7 @@ app = Flask(__name__, template_folder=tmpl_dir)
 
 global keyword
 global user
-global ingre_count
+#global ingre_count
 global ingred, db_did
 keyword=""
 user = {'id': "guest0", "name": "Guest", 'user_type': "u"}
@@ -261,8 +261,26 @@ def view(id=None):
     temp['calorie'] = calorie
     ingredients.append(temp)
   cursor.close()
+  cursor = g.conn.execute("SELECT SUM(I.carb*C.quantity*4+I.protein*C.quantity*4+I.fat*C.quantity*9) FROM Recipe R, Contains C, Ingredients I WHERE I.ingredient_id=C.ingredient_id and R.dish_id=C.dish_id and C.dish_id=%s GROUP BY R.dish_id",(id)) 
+  result = cursor.fetchone()
+  infos['cal'] = result[0]
+  cursor.close()
+  
+  cursor = g.conn.execute('SELECT * FROM Author A, Follows F, Users U WHERE F.user_id=U.user_id AND A.auth_id=F.auth_id AND A.auth_id=%s AND U.user_id=%s', (infos['auth_id'], user['id'], ))
+  result = cursor.fetchone()
+  if result:
+    infos['followed'] = True
+  else:
+    infos['followed'] = False
+  cursor.close()
 
-  infos['cal'] = cal
+  cursor = g.conn.execute('SELECT R.dish_id, R.dish_name FROM Recipe R, Likes L, Users U WHERE L.user_id=U.user_id AND R.dish_id=L.dish_id AND R.dish_id=%s AND U.user_id=%s', (infos['dish_id'], user['id']))
+  result = cursor.fetchone()
+  if result:
+    infos['liked'] = True
+  else:
+    infos['liked'] = False
+  cursor.close()
   info = dict(info=infos)
   ingredient = dict(ingredient = ingredients)
 
@@ -285,6 +303,13 @@ def view_auth(auth_id=None):
     temp['dish_id'] = result['dish_id']
     temp['dish_name'] = result['dish_name']
     dishes.append(temp)
+  cursor.close()
+  cursor = g.conn.execute('SELECT * FROM Author A, Follows F, Users U WHERE F.user_id=U.user_id AND A.auth_id=F.auth_id AND A.auth_id=%s AND U.user_id=%s', (infos['auth_id'], user['id'], ))
+  result = cursor.fetchone()
+  if result:
+    infos['followed'] = True
+  else:
+    infos['followed'] = False
   cursor.close()
   info = dict(info=infos)
   dish = dict(dish=dishes)
@@ -380,6 +405,13 @@ def like():
     g.conn.execute('INSERT INTO likes VALUES (%s, %s)', user['id'], dish_id)
   return redirect("/collection/"+user['id'])
 
+@app.route('/unlike', methods=['POST'])
+def unlike():
+  global user
+  dish_id = request.form['id']
+  g.conn.execute('delete from likes where dish_id=%s and user_id=%s', (dish_id, user['id'], ))
+  return redirect("/collection/"+user['id'])
+
 # -----------------------------------------------------------------------------------------------
 
 @app.route('/tofollowing')
@@ -412,6 +444,13 @@ def follow():
   print(result)
   if not result:
     g.conn.execute('INSERT INTO follows VALUES (%s, %s)', (user['id'], auth_id))
+  return redirect("/following/"+user['id'])
+
+@app.route('/unfollow', methods=['POST'])
+def unfollow():
+  global user
+  auth_id = request.form['id']
+  g.conn.execute('delete from follows where auth_id=%s and user_id=%s', (auth_id, user['id'], ))
   return redirect("/following/"+user['id'])
 
 # -----------------------------------------------------------------------------------------------
