@@ -12,10 +12,10 @@
     </head><body>
         
         <div class="container">
-            <h1>User login</h1>
+            <h1>Author login</h1>
             <br>
-            <form method="POST" action="/login">
-              <input type="text" placeholder="User ID" name="id">
+            <form method="POST" action="/auth_login">
+              <input type="text" placeholder="Author ID" name="id">
               <input type="pswd" placeholder="Password" name="pswd">
               <input class="btn btn-default" type="submit" value="Login">
             </form>
@@ -23,7 +23,7 @@
               <p class="error"><strong>Error:</strong> {{ error }}
             {% endif %}
         </div>
-        <p><a href="auth_login_page"> Switch to Author Login</a></p>
+        <p><a href="/"> Switch to User Login</a></p>
         <p><a href="signup_page"> Register an account with us!</a></p>
 
 </body></html>

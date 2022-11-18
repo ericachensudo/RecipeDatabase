@@ -23,7 +23,7 @@ global keyword
 global user
 global ingre_quant
 keyword=""
-user = {'id': "default", "name": "default"}
+user = {'id': "guest0", "name": "Guest", 'user_type': "u"}
 
 # The following is a dummy URI that does not connect to a valid database. You will need to modify it to connect to your Part 2 database in order to use the data.
 #
@@ -95,8 +95,8 @@ def teardown_request(exception):
 # see for routing: https://flask.palletsprojects.com/en/2.0.x/quickstart/?highlight=routing
 # see for decorators: http://simeonfranklin.com/blog/2012/jul/1/python-decorators-in-12-steps/
 #
-@app.route('/')
-def index():
+@app.route('/home')
+def home():
   global keyword
   keyword=""
   """
@@ -135,7 +135,7 @@ def index():
   #context = dict(data = names)
   dish = dict(dish = dishes)
 
-  return render_template("index.html", **dish)
+  return render_template("home.html", **dish)
 
 # -----------------------------------------------------------------------------------------------
 
@@ -167,7 +167,7 @@ def search():
     temp['dish_id'] = "d0"
     dishes.append(temp)
   dish = dict(dish = dishes)
-  return render_template("index.html", **dish)
+  return render_template("home.html", **dish)
 
 # -----------------------------------------------------------------------------------------------
 
@@ -193,7 +193,7 @@ def sort():
     dishes.append(temp)
   cursor.close()
   dish = dict(dish = dishes)
-  return render_template("index.html", **dish)
+  return render_template("home.html", **dish)
 
 # -----------------------------------------------------------------------------------------------
 
@@ -291,7 +291,7 @@ def login():
     user['id'] = content['user_id']
     user['name'] = content['user_name']
     #return redirect("/collection/"+user['id'])
-    return redirect("/")
+    return redirect("/home")
   else:
     error_msg = "Incorrect user id and password combination."
     error = dict(error=error_msg)
@@ -313,39 +313,45 @@ def login():
 #       else:
 #         return render_template(login.html, boolean=True)
 
-@app.route('/login_page')
+@app.route('/')
 def login_page():
   #login_type = "User"
   #login_link = "/login"
   #login_info = {"login_type": login_type, "login_link": login_link}
   #login = dict(login=login_info)
+  global user
+  user = {'id': "guest0", "name": "Guest"}
   return render_template("login.html")
 
 # -----------------------------------------------------------------------------------------------
 
 @app.route('/auth_login', methods=['POST'])
 def auth_login():
-  global author
+  global user
   authid = request.form['id']
   pswd = request.form['pswd']
-  cursor = g.conn.execute("SELECT * FROM Author WHERE auth_id='"+authid+"' AND auth_password='"+pswd+"'")
+  print(authid, pswd)
+  cursor = g.conn.execute("SELECT * FROM Author WHERE auth_email='"+authid+"' AND auth_password='"+pswd+"'")
   content = cursor.fetchone()
   if content:
-    author['id'] = content['auth_id']
-    author['name'] = content['auth_name']
-    return redirect("/collection/"+author['id'])
+    user['id'] = content['auth_id']
+    user['name'] = content['auth_name']
+    user['type'] = 'a'
+    #return redirect("/collection/"+author['id'])
+    return redirect("home")
   else:
-    error_msg = "Incorrect author id and password combination."
+    error_msg = "Incorrect author email and password combination."
     error = dict(error=error_msg)
     return render_template("login.html", **error)
 
 @app.route('/auth_login_page')
 def auth_login_page():
-  login_type = "Author"
-  login_link = "/auth_login"
-  login_info = {"login_type": login_type, "login_link": login_link}
-  login = dict(login=login_info)
-  return render_template("login.html", **login)
+  #login_type = "Author"
+  #login_link = "/auth_login"
+  #login_info = {"login_type": login_type, "login_link": login_link}
+  #login = dict(login=login_info)
+  #return render_template("auth_login.html", **login)
+  return render_template("auth_login.html")
 
 # -----------------------------------------------------------------------------------------------
 
