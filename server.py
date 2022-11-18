@@ -263,12 +263,12 @@ def view(id=None):
 @app.route('/view_auth/<auth_id>')
 def view_auth(auth_id=None):
   infos = dict()
-  cursor = g.conn.execute("SELECT * FROM Author WHERE auth_id='"+auth_id+"'")
+  cursor = g.conn.execute("SELECT * FROM Author WHERE auth_id=%s", auth_id)
   result = cursor.fetchone()
   infos['auth_id'] = auth_id
   infos['auth_name'] = result['auth_name']
   infos['auth_email'] = result['auth_email']
-  cursor = g.conn.execute("SELECT R.dish_id, R.dish_name FROM Author A, Writes W, Recipe R WHERE A.auth_id=W.auth_id AND W.dish_id=R.dish_id AND A.auth_id='"+auth_id+"'")
+  cursor = g.conn.execute("SELECT R.dish_id, R.dish_name FROM Author A, Writes W, Recipe R WHERE A.auth_id=W.auth_id AND W.dish_id=R.dish_id AND A.auth_id=%s", auth_id)
   dishes = []
   for result in cursor:
     temp = dict()
@@ -414,7 +414,8 @@ def following(userid=None):
 def follow():
   global user
   auth_id = request.form['id']
-  g.conn.execute('INSERT INTO follows VALUES (%s, %s)', user['id'], auth_id)
+  if g.conn.execute('SELECT (%s, %s) FROM follows', (user['id'], auth_id)) == False:
+    g.conn.execute('INSERT INTO follows VALUES (%s, %s)', (user['id'], auth_id))
   return redirect("/following/"+user['id'])
 
 # -----------------------------------------------------------------------------------------------
@@ -426,7 +427,8 @@ def signup_page():
     name = request.form['name']
     password = request.form['password']
     email = request.form['email']
-    g.conn.execute('INSERT INTO Users VALUES (%s, %s, %s, %s)', user_id, name, password, email)
+    if g.conn.execute('SELECT (%s, %s, %s, %s) FROM Users', (user_id, name, password, email)) == False:
+      g.conn.execute('INSERT INTO Users VALUES (%s, %s, %s, %s)', (user_id, name, password, email))
     return render_template('signup.html')
   
   elif request.method == 'GET':
@@ -448,11 +450,13 @@ def recs_page():
     quick = 'prep_time'
     diet = 'calorie'
     liked = 'liked'
+    protein = 'protein'
 
     s = 'SELECT dish_id, dish_name FROM Recipe WHERE is_spicy = True'
     l = 'SELECT R.dish_id, R.dish_name FROM Recipe r, Likes l WHERE r.dish_id=l.dish_id GROUP BY R.dish_id HAVING COUNT(L.dish_id)>1'
     q = 'SELECT dish_id, dish_name FROM Recipe WHERE prep_time < 30'
-    d = "SELECT R.dish_id, R.dish_name FROM Recipe R, Contains C, Ingredients I WHERE R.dish_id=C.dish_id AND C.ingredient_id=I.ingredient_id GROUP BY R.dish_id HAVING SUM(I.calorie*C.quantity)<600"
+    d = 'SELECT R.dish_id, R.dish_name FROM Recipe R, Contains C, Ingredients I WHERE R.dish_id=C.dish_id AND C.ingredient_id=I.ingredient_id GROUP BY R.dish_id HAVING SUM(I.calorie*C.quantity)<600'
+    p = 'SELECT R.dish_id, R.dish_name FROM Recipe R, Contains C, Ingredients I WHERE R.dish_id=C.dish_id AND C.ingredient_id=I.ingredient_id GROUP BY R.dish_id HAVING SUM(I.protein*C.quantity)>0'
 
     plus = ' INTERSECT '
     res = ''
@@ -469,6 +473,8 @@ def recs_page():
         res += d
       elif n == liked:
         res += l
+      elif n == protein:
+        res += p
       counter +=1
       
     cursor = g.conn.execute(res)
@@ -490,13 +496,17 @@ def recs_page():
 
 # -----------------------------------------------------------------------------------------------
 
+@app.route('/quant_ingredient', methods=['POST', 'GET'])
+def quant_ingredient():
+  if request.method == 'POST':
+    ingre_quant = request.form["ingre_quant"]
+    return render_template('add_ingredient.html', **ingre_quant)
+
 @app.route('/add_ingredient', methods=['POST', 'GET'])
 def add_ingredient():
   global user
   user_info = dict(user_info=user)
   if request.method == 'POST':
-    # ingre_quant
-
     ingredient_id = g.conn.execute('SELECT MAX(ASCII(ingredient_id)) FROM Ingredients')
     ingredient_name = request.form['ingredient_name']
     protein = request.form['protein']
@@ -505,7 +515,8 @@ def add_ingredient():
     calorie = request.form['calorie']
     units = request.form['units']
 
-    g.conn.execute('INSERT INTO Ingredients(ingredient_id, ingredient_name, protein, carb, fat, calorie, units) VALUES (%s, %s, %d, %d, %d, %d, %s)', (ingredient_id, ingredient_name, protein, carb, fat, calorie, units))
+    if g.conn.execute('SELECT %s FROM Ingredients', ingredient_name) == False:
+      g.conn.execute('INSERT INTO Ingredients(ingredient_id, ingredient_name, protein, carb, fat, calorie, units) VALUES (%s, %s, %d, %d, %d, %d, %s)', (ingredient_id, ingredient_name, protein, carb, fat, calorie, units))
     
     return render_template('add_ingredient.html',**user_info)
   elif  request.method == 'GET':
@@ -520,37 +531,47 @@ def add_recipe():
     print(request.form)
 
     ingredient_id = g.conn.execute('SELECT MAX(ASCII(ingredient_id)) FROM Ingredients')
+    instructions = request.form['instructions']
 
     dish_id = g.conn.execute('SELECT MAX(ASCII(dish_id)) FROM Recipe')
     dish_name = request.form['dish_name']
     
     prep_time = request.form['prep_time']
     is_spicy = request.form['is_spicy']
-    g.conn.execute('INSERT INTO Recipe VALUES (%s, %s, %s, %d, %r)', (dish_id, dish_name, instructions, prep_time, is_spicy))
+    if g.conn.execute('SELECT %s FROM Recipe', dish_name) == False:
+      g.conn.execute('INSERT INTO Recipe VALUES (%s, %s, %s, %d, %r)', (dish_id, dish_name, instructions, prep_time, is_spicy))
 
     portion = request.form['portion']
-    g.conn.execute('INSERT INTO Contains(dish_id, ingredient_id, portion) VALUES (%s, %s, %d)', (dish_id, ingredient_id, portion))
+    if g.conn.execute('SELECT (%s, %s, %d) FROM Contains', (dish_id, ingredient_id, portion)) == False:
+      g.conn.execute('INSERT INTO Contains(dish_id, ingredient_id, portion) VALUES (%s, %s, %d)', (dish_id, ingredient_id, portion))
 
     region_name = request.form['region_name']
-    g.conn.execute('INSERT INTO Cuisine(cuisine_id, region_name) VALUES (%s, %s)', (cuisine_id, region_name))
+    if g.conn.execute('SELECT (%s, %s) FROM Cuisine', (cuisine_id, region_name)) == False:
+      g.conn.execute('INSERT INTO Cuisine(cuisine_id, region_name) VALUES (%s, %s)', (cuisine_id, region_name))
 
     cuisine_id = g.conn.execute('SELECT MAX(ASCII(cuisine_id)) FROM Type_Of')
-    g.conn.execute('INSERT INTO Type_Of(dish_id, cuisine_id) VALUES (%s, %s)', (dish_id, cuisine_id))
+    if g.conn.execute('SELECT (%s, %s) FROM Type_Of', (dish_id, cuisine_id)) == False:
+      g.conn.execute('INSERT INTO Type_Of(dish_id, cuisine_id) VALUES (%s, %s)', (dish_id, cuisine_id))
 
     cookware_name = request.form['cookware_name']
     is_electric = request.form['is_electric']
-    g.conn.execute('INSERT INTO Cookware(cookware_id, cookware_name, is_electric) VALUES (%s, %s, %r)', (cookware_id, cookware_name, is_electric))
+    if g.conn.execute('SELECT (%s, %s, %r) FROM Cookware', (cookware_id, cookware_name, is_electric)) == False:
+      g.conn.execute('INSERT INTO Cookware(cookware_id, cookware_name, is_electric) VALUES (%s, %s, %r)', (cookware_id, cookware_name, is_electric))
 
     cookware_id = g.conn.execute('SELECT MAX(ASCII(cookware_id)) FROM Utilizes')
-    g.conn.execute('INSERT INTO Utilizes(dish_id, cookware_id) VALUES (%s, %s)', (dish_id, cookware_id))
+    if g.conn.execute('SELECT (%s,%s) FROM Utilizes', (dish_id, cookware_id)) == False:
+      g.conn.execute('INSERT INTO Utilizes(dish_id, cookware_id) VALUES (%s, %s)', (dish_id, cookware_id))
 
     auth_name = request.form['auth_name']
     auth_email = request.form['auth_email']
     auth_password = request.form['auth_password']
-    g.conn.execute('INSERT INTO Author(auth_id, auth_name, auth_email, auth_password) VALUES (%s, %s, %s)', (auth_id, auth_name, auth_email))
+    cookware_id = g.conn.execute('SELECT MAX(ASCII(cookware_id)) FROM Utilizes')
+    if g.conn.execute('SELECT (%s,%s,%s) FROM Author', (auth_id, auth_name, auth_email, auth_password)) == False:
+      g.conn.execute('INSERT INTO Author(auth_id, auth_name, auth_email, auth_password) VALUES (%s, %s, %s)', (auth_id, auth_name, auth_email))
 
     auth_id = g.conn.execute('SELECT MAX(ASCII(auth_id)) FROM Writes')
-    g.conn.execute('INSERT INTO Writes(auth_id, dish_id) VALUES (%s, %s)', (auth_id, dish_id))
+    if g.conn.execute('SELECT (%s,%s) FROM Writes', (auth_id, dish_id)) == False:
+      g.conn.execute('INSERT INTO Writes(auth_id, dish_id) VALUES (%s, %s)', (auth_id, dish_id))
 
     return render_template('add_recipe.html')
   elif  request.method == 'GET':

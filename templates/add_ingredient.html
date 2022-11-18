@@ -11,19 +11,20 @@
             <input type="submit" value="Enter">
         </form>
 
-        {% for x in request.form["ingre_quant"] %}        
-            <form method="POST" action="/add_ingredient">
-                <!-- keep track of last ingredient ID in system and increment -->
-                Ingredient Name: <input placeholder="Name of Ingredient" type="text" name="ingredient_name"> 
-                Protein: <input type="text" placeholder="Measurement in Grams" name="protein">
-                Carb: <input type="text" placeholder="Measurement in Grams" name="carb">
-                Fat: <input type="text" placeholder="Measurement in Grams" name="fat">
-                Calorie: <input type="text" placeholder="Number of Calorie" name="calorie">
-                Units: <input type="text" placeholder="Measurement in Grams" name="units">
-                <input class="btn btn-default" type="submit" value="Add New Recipe">
-            </form>
-        {% endfor %}
-
+              
+        <form method="POST" action="/add_ingredient"> 
+            {% for x in  %} 
+            keep track of last ingredient ID in system and increment
+            Ingredient Name: <input placeholder="Name of Ingredient" type="text" name="ingredient_name"> 
+            Protein: <input type="text" placeholder="Measurement in Grams" name="protein">
+            Carb: <input type="text" placeholder="Measurement in Grams" name="carb">
+            Fat: <input type="text" placeholder="Measurement in Grams" name="fat">
+            Calorie: <input type="text" placeholder="Number of Calorie" name="calorie">
+            Units: <input type="text" placeholder="Measurement in Grams" name="units">
+            {% endfor %}
+        </form>
+        
+        <input class="btn btn-default" type="submit" value="Add New Recipe">
         <p><a href="add_recipe"> Continue to add more details</a></p>
 
     </body>
