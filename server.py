@@ -541,6 +541,8 @@ def enter_ingredient():
     current_id += 1
     ingredient_id = 'i'+str(current_id)
     ingredient_name = request.form['ingredient_name']
+    if not ingredient_name:
+      return redirect("add_ingredient")
     temp = dict()
     temp['id'] = ingredient_id
     temp['name'] = ingredient_name
