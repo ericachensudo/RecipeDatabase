@@ -11,12 +11,23 @@
     <input type="radio" id="prep_desc" name="sorting" value="prep_desc"> Prep Time (Descending)
     <input type="submit" value="Sort">
 </form>
+{% if mode.search %}
+<p>Search results for "{{mode.search}}":
+
+</p>
+{% endif %}
+
   <ul class="recipe_list">
     {% for n in dish %}
       {% if n.dish_id == "d0" %}
         <div>Sorry, no results meet your criteria.</div>
       {% else %}
         <li><a href="/view/{{n.dish_id}}">{{n.dish_name}}</a></li>
+        {% if mode.search %}
+        <div class="smaller">(Author: {{n.auth_name}} | Cuisine: {{n.cuisine_name}} | Cookware: {{n.cookware_name}})
+
+        </div>
+        {% endif %}
       {% endif %}
     {% endfor %}
   </ul>

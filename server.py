@@ -19,11 +19,12 @@ from flask import Flask, request, url_for, render_template, g, redirect, Respons
 tmpl_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'templates')
 app = Flask(__name__, template_folder=tmpl_dir)
 
-global keyword, user
+global keyword, user, modes
 #global ingre_count
 #global ingred, db_did
 keyword=""
 user = {'id': "guest0", "name": "Guest", 'user_type': "u"}
+modes = {'search': False}
 #ingre_count=1
 #ingred = ['start']
 #db_did=11
@@ -100,9 +101,10 @@ def teardown_request(exception):
 #
 @app.route('/home')
 def home():
-  global keyword, user
+  global keyword, user, modes
   print(user)
   keyword=""
+  modes['search'] = False
   """
   request is a special object that Flask provides to access web request information:
 
@@ -136,17 +138,19 @@ def home():
     dishes.append(temp)
   cursor.close()
   dish = dict(dish = dishes)
-  user_info = dict(user_info=user) 
+  user_info = dict(user_info=user)
+  mode = dict(mode=modes)  
 
-  return render_template("home.html", **dish, **user_info)
+  return render_template("home.html", **dish, **user_info, **mode)
 
 # -----------------------------------------------------------------------------------------------
 
 @app.route('/search', methods=['POST'])
 def search():
-  global keyword, user
+  global keyword, user, modes
   user_info = dict(user_info=user) 
   keyword = request.form['keyword']
+  modes['search'] = keyword
   if not keyword:
     return redirect('/')
     
@@ -165,6 +169,21 @@ def search():
     temp = dict()
     temp['dish_id'] = result['dish_id']
     temp['dish_name'] = result['dish_name']
+    cursor1 = g.conn.execute("SELECT A.auth_name FROM Recipe R, Writes W, Author A WHERE R.dish_id=W.dish_id AND W.auth_id=A.auth_id AND R.dish_id=%s", (temp['dish_id']))
+    output = cursor1.fetchone()
+    temp['auth_name'] = output[0]
+    cursor1.close()
+
+    cursor1 = g.conn.execute("SELECT C.region_name FROM Recipe R, Type_of T, Cuisine C WHERE R.dish_id=T.dish_id AND C.cuisine_id=T.cuisine_id AND R.dish_id=%s", (temp['dish_id']))
+    output = cursor1.fetchone()
+    temp['cuisine_name'] = output[0]
+    cursor1.close()
+
+    cursor1 = g.conn.execute("SELECT C.cookware_name FROM Recipe R, Utilizes U, Cookware C WHERE R.dish_id=U.dish_id AND U.cookware_id=C.cookware_id AND R.dish_id=%s", (temp['dish_id']))
+    output = cursor1.fetchone()
+    temp['cookware_name'] = output[0]
+    cursor1.close()
+
     dishes.append(temp)
   cursor.close()
   if not dishes:
@@ -172,13 +191,14 @@ def search():
     temp['dish_id'] = "d0"
     dishes.append(temp)
   dish = dict(dish = dishes)
-  return render_template("home.html", **dish, **user_info)
+  mode = dict(mode=modes)  
+  return render_template("home.html", **dish, **user_info, **mode)
 
 # -----------------------------------------------------------------------------------------------
 
 @app.route('/sort', methods=['POST'])
 def sort():
-  global keyword, user
+  global keyword, user, modes
   user_info = dict(user_info=user) 
   keyword = keyword.lower()
   sorting = request.form['sorting']
@@ -195,11 +215,27 @@ def sort():
     temp = dict()
     temp['dish_id'] = result['dish_id']
     temp['dish_name'] = result['dish_name']
+    cursor1 = g.conn.execute("SELECT A.auth_name FROM Recipe R, Writes W, Author A WHERE R.dish_id=W.dish_id AND W.auth_id=A.auth_id AND R.dish_id=%s", (temp['dish_id']))
+    output = cursor1.fetchone()
+    temp['auth_name'] = output[0]
+    cursor1.close()
+
+    cursor1 = g.conn.execute("SELECT C.region_name FROM Recipe R, Type_of T, Cuisine C WHERE R.dish_id=T.dish_id AND C.cuisine_id=T.cuisine_id AND R.dish_id=%s", (temp['dish_id']))
+    output = cursor1.fetchone()
+    temp['cuisine_name'] = output[0]
+    cursor1.close()
+
+    cursor1 = g.conn.execute("SELECT C.cookware_name FROM Recipe R, Utilizes U, Cookware C WHERE R.dish_id=U.dish_id AND U.cookware_id=C.cookware_id AND R.dish_id=%s", (temp['dish_id']))
+    output = cursor1.fetchone()
+    temp['cookware_name'] = output[0]
+    cursor1.close()
+
     temp[criteria] = result[criteria]
     dishes.append(temp)
   cursor.close()
   dish = dict(dish = dishes)
-  return render_template("home.html", **dish, **user_info)
+  mode = dict(mode=modes)  
+  return render_template("home.html", **dish, **user_info, **mode)
 
 # -----------------------------------------------------------------------------------------------
 

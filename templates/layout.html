@@ -33,6 +33,12 @@
       color: #7A3803;
     }
 
+    .smaller{
+      color:grey;
+      font-size: smaller;
+      margin-bottom: 10px;
+    }
+
   </style>
 
 
@@ -53,6 +59,7 @@
     <a class="nav_bar" href="/">Sign In</a>
     {% else %}
     <a class="nav_bar" href="/">Log Out</a>
+    Welcome, {{user_info.name}}@
     {% endif %}
     <form class="nav_bar" method="POST" action="/search">
       <input type="text" name="keyword"> <input type="submit" value="Search">
