@@ -4,6 +4,9 @@
 
 <body>
   <h2>My Collection</h2>
+  {% if user_info.id=='guest0' %}
+  <p><a href="/"> Login to see your collections.</a></p>
+  {% endif %}
   <ul class="recipe_list">
     {% for n in dish %}
     <li><a href="/view/{{n.dish_id}}">{{n.dish_name}}</a></li>

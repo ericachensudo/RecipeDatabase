@@ -4,9 +4,11 @@
 
 <body>
   <h2>Chef: {{info.auth_name}}</h2>
+  {% if user_info.id!='guest0' %}
   <form method="POST" action="/follow">
     <input class="invisible" type="text" name="id" value="{{info.auth_id}}"> <input type="submit" value="Follow">
   </form>
+  {% endif %}
   <h3>Contact: {{info.auth_email}}</h3>
 
   <h3>Chef Menu:</h3>

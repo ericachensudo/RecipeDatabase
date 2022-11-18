@@ -5,14 +5,18 @@
 <body>
   
   <h2>{{info.dish_name}} ({{info.cuisine}})</h2>
+  {% if user_info.id!='guest0' %}
   <form method="POST" action="/like">
     <input class="invisible" type="text" name="id" value="{{info.dish_id}}"> <input type="submit" value="Like">
   </form>
+  {% endif %}
 
   <h3>Chef: <a href="/view_auth/{{info.auth_id}}">{{info.auth_name}}</a></h3>
+  {% if user_info.id!='guest0' %}
   <form method="POST" action="/follow">
     <input class="invisible" type="text" name="id" value="{{info.auth_id}}"> <input type="submit" value="Follow">
   </form>
+  {% endif %}
   <h3>Prep Time: {{info.prep_time}} min</h3>
   <h3>Spicy: {{info.spicy}}, Cookware: {{info.cookware}}({{info.electric}})</h3>
 
