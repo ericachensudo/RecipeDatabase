@@ -24,7 +24,7 @@ global user
 global ingre_count
 global ingred, db_did
 keyword=""
-user = {'id': "guest0", "name": "Guest", 'user_type': "a"}
+user = {'id': "guest0", "name": "Guest", 'user_type': "u"}
 ingre_count=1
 ingred = ['start']
 db_did=11
@@ -446,7 +446,7 @@ def recs_page():
     l = 'SELECT R.dish_id, R.dish_name FROM Recipe r, Likes l WHERE r.dish_id=l.dish_id GROUP BY R.dish_id HAVING COUNT(L.dish_id)>1'
     q = 'SELECT dish_id, dish_name FROM Recipe WHERE prep_time < 30'
     d = 'SELECT R.dish_id, R.dish_name FROM Recipe R, Contains C, Ingredients I WHERE R.dish_id=C.dish_id AND C.ingredient_id=I.ingredient_id GROUP BY R.dish_id HAVING SUM(I.calorie*C.quantity)<600'
-    p = 'SELECT R.dish_id, R.dish_name FROM Recipe R, Contains C, Ingredients I WHERE R.dish_id=C.dish_id AND C.ingredient_id=I.ingredient_id GROUP BY R.dish_id HAVING SUM(I.protein*C.quantity)>0'
+    p = 'SELECT R.dish_id, R.dish_name FROM Recipe R, Contains C, Ingredients I WHERE R.dish_id=C.dish_id AND C.ingredient_id=I.ingredient_id GROUP BY R.dish_id HAVING SUM(I.protein*C.quantity)>50'
 
     plus = ' INTERSECT '
     res = ''
