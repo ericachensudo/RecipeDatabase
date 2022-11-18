@@ -97,7 +97,8 @@ def teardown_request(exception):
 #
 @app.route('/home')
 def home():
-  global keyword
+  global keyword, user
+  print(user)
   keyword=""
   """
   request is a special object that Flask provides to access web request information:
@@ -134,8 +135,9 @@ def home():
 
   #context = dict(data = names)
   dish = dict(dish = dishes)
+  user_info = dict(user_info=user) 
 
-  return render_template("home.html", **dish)
+  return render_template("home.html", **dish, **user_info)
 
 # -----------------------------------------------------------------------------------------------
 
@@ -336,7 +338,7 @@ def auth_login():
   if content:
     user['id'] = content['auth_id']
     user['name'] = content['auth_name']
-    user['type'] = 'a'
+    user['user_type'] = 'a'
     #return redirect("/collection/"+author['id'])
     return redirect("home")
   else:
@@ -363,6 +365,7 @@ def tocollection():
 
 @app.route('/collection/<userid>')
 def collection(userid=None):
+  global user
   cursor = g.conn.execute("SELECT R.dish_id, R.dish_name FROM Recipe R, Likes L, Users U WHERE L.user_id=U.user_id AND R.dish_id=L.dish_id AND U.user_id='"+userid+"'")
   dishes = []
   for result in cursor:
@@ -372,7 +375,8 @@ def collection(userid=None):
     dishes.append(temp)
   cursor.close()
   dish = dict(dish = dishes)
-  return render_template("collection.html", **dish)
+  user_info = dict(user_info=user)
+  return render_template("collection.html", **dish, **user_info)
 
 # -----------------------------------------------------------------------------------------------
 
@@ -393,6 +397,8 @@ def tofollowing():
   
 @app.route('/following/<userid>')
 def following(userid=None):
+  global user
+  user_info = dict(user_info=user)
   cursor = g.conn.execute("SELECT A.auth_id, A.auth_name FROM Author A, Follows F, Users U WHERE F.user_id=U.user_id AND A.auth_id=F.auth_id AND U.user_id='"+userid+"'")
   authors = []
   for result in cursor:
@@ -402,7 +408,7 @@ def following(userid=None):
     authors.append(temp)
   cursor.close()
   author = dict(author = authors)
-  return render_template("following.html", **author)
+  return render_template("following.html", **author, **user_info)
 
 @app.route('/follow', methods=['POST'])
 def follow():
@@ -430,8 +436,9 @@ def signup_page():
 
 @app.route('/recs_page', methods=['POST', 'GET'])
 def recs_page():
+  global user
+  user_info = dict(user_info=user)
   if request.method == 'POST':
-    global user
     recommendation = []
     for key in request.form:
       recommendation.append(request.form[key])
@@ -477,14 +484,16 @@ def recs_page():
       temp['dish_id'] = "d0"
       dishes.append(temp)
     dish = dict(dish = dishes)
-    return render_template("recs.html", **dish)
+    return render_template("recs.html", **dish, **user_info)
   elif request.method == 'GET':
-    return render_template('recs.html')
+    return render_template('recs.html', **user_info)
 
 # -----------------------------------------------------------------------------------------------
 
 @app.route('/add_ingredient', methods=['POST', 'GET'])
 def add_ingredient():
+  global user
+  user_info = dict(user_info=user)
   if request.method == 'POST':
     # ingre_quant
 
@@ -498,9 +507,9 @@ def add_ingredient():
 
     g.conn.execute('INSERT INTO Ingredients(ingredient_id, ingredient_name, protein, carb, fat, calorie, units) VALUES (%s, %s, %d, %d, %d, %d, %s)', (ingredient_id, ingredient_name, protein, carb, fat, calorie, units))
     
-    return render_template('add_ingredient.html')
+    return render_template('add_ingredient.html',**user_info)
   elif  request.method == 'GET':
-    return render_template("add_ingredient.html")
+    return render_template("add_ingredient.html", **user_info)
 
 # -----------------------------------------------------------------------------------------------
 
