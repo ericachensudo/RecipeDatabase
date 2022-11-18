@@ -23,7 +23,7 @@ global keyword
 global user
 global ingre_quant
 keyword=""
-user = {'id': "guest0", "name": "Guest", 'user_type': "u"}
+user = {'id': "guest0", "name": "Guest", 'user_type': "a"}
 
 # The following is a dummy URI that does not connect to a valid database. You will need to modify it to connect to your Part 2 database in order to use the data.
 #
