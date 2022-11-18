@@ -49,7 +49,11 @@
     <a class="nav_bar" href="/tofollowing">My Following</a>
     <a class="nav_bar" href="/recs_page">Recommend</a>
     {% endif %}
+    {% if user_info.id=='guest0' %}
+    <a class="nav_bar" href="/">Sign In</a>
+    {% else %}
     <a class="nav_bar" href="/">Log Out</a>
+    {% endif %}
     <form class="nav_bar" method="POST" action="/search">
       <input type="text" name="keyword"> <input type="submit" value="Search">
     </form>
