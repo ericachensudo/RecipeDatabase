@@ -23,7 +23,7 @@ global keyword
 global user
 global ingre_quant
 keyword=""
-user = {'id': "default", "name": "default"}
+user = {'id': "guest0", "name": "Guest", 'user_type': "u"}
 
 # The following is a dummy URI that does not connect to a valid database. You will need to modify it to connect to your Part 2 database in order to use the data.
 #
@@ -95,9 +95,10 @@ def teardown_request(exception):
 # see for routing: https://flask.palletsprojects.com/en/2.0.x/quickstart/?highlight=routing
 # see for decorators: http://simeonfranklin.com/blog/2012/jul/1/python-decorators-in-12-steps/
 #
-@app.route('/')
-def index():
-  global keyword
+@app.route('/home')
+def home():
+  global keyword, user
+  print(user)
   keyword=""
   """
   request is a special object that Flask provides to access web request information:
@@ -134,8 +135,9 @@ def index():
 
   #context = dict(data = names)
   dish = dict(dish = dishes)
+  user_info = dict(user_info=user) 
 
-  return render_template("index.html", **dish)
+  return render_template("home.html", **dish, **user_info)
 
 # -----------------------------------------------------------------------------------------------
 
@@ -167,7 +169,7 @@ def search():
     temp['dish_id'] = "d0"
     dishes.append(temp)
   dish = dict(dish = dishes)
-  return render_template("index.html", **dish)
+  return render_template("home.html", **dish)
 
 # -----------------------------------------------------------------------------------------------
 
@@ -193,7 +195,7 @@ def sort():
     dishes.append(temp)
   cursor.close()
   dish = dict(dish = dishes)
-  return render_template("index.html", **dish)
+  return render_template("home.html", **dish)
 
 # -----------------------------------------------------------------------------------------------
 
@@ -291,45 +293,67 @@ def login():
     user['id'] = content['user_id']
     user['name'] = content['user_name']
     #return redirect("/collection/"+user['id'])
-    return redirect("/")
+    return redirect("/home")
   else:
     error_msg = "Incorrect user id and password combination."
     error = dict(error=error_msg)
     return render_template("login.html", **error)
 
-@app.route('/login_page')
+# def login():
+#   if request.method == 'POST':
+#     userid = request.form.get['id']
+#     pswd = request.form.get['pswd']
+#     cursor = g.conn.execute("SELECT user_id FROM Users WHERE user_id = %s, pswd = %s, userid, pswd")
+#     users = []
+      
+#     for id in cursor:
+#       users.append(users[0])
+#       cursor.close()
+#       context = disct(data = users)
+#       if len(users) != 0:
+#         return render_template("index.html", boolean=True)
+#       else:
+#         return render_template(login.html, boolean=True)
+
+@app.route('/')
 def login_page():
   #login_type = "User"
   #login_link = "/login"
   #login_info = {"login_type": login_type, "login_link": login_link}
   #login = dict(login=login_info)
+  global user
+  user = {'id': "guest0", "name": "Guest"}
   return render_template("login.html")
 
 # -----------------------------------------------------------------------------------------------
 
 @app.route('/auth_login', methods=['POST'])
 def auth_login():
-  global author
+  global user
   authid = request.form['id']
   pswd = request.form['pswd']
-  cursor = g.conn.execute("SELECT * FROM Author WHERE auth_id=%s AND auth_password=%s", authid, pswd)
+  print(authid, pswd)
+  cursor = g.conn.execute("SELECT * FROM Author WHERE auth_email='"+authid+"' AND auth_password='"+pswd+"'")
   content = cursor.fetchone()
   if content:
-    author['id'] = content['auth_id']
-    author['name'] = content['auth_name']
-    return redirect("/collection/"+author['id'])
+    user['id'] = content['auth_id']
+    user['name'] = content['auth_name']
+    user['user_type'] = 'a'
+    #return redirect("/collection/"+author['id'])
+    return redirect("home")
   else:
-    error_msg = "Incorrect author id and password combination."
+    error_msg = "Incorrect author email and password combination."
     error = dict(error=error_msg)
     return render_template("login.html", **error)
 
 @app.route('/auth_login_page')
 def auth_login_page():
-  login_type = "Author"
-  login_link = "/auth_login"
-  login_info = {"login_type": login_type, "login_link": login_link}
-  login = dict(login=login_info)
-  return render_template("login.html", **login)
+  #login_type = "Author"
+  #login_link = "/auth_login"
+  #login_info = {"login_type": login_type, "login_link": login_link}
+  #login = dict(login=login_info)
+  #return render_template("auth_login.html", **login)
+  return render_template("auth_login.html")
 
 # -----------------------------------------------------------------------------------------------
 
@@ -341,7 +365,8 @@ def tocollection():
 
 @app.route('/collection/<userid>')
 def collection(userid=None):
-  cursor = g.conn.execute("SELECT R.dish_id, R.dish_name FROM Recipe R, Likes L, Users U WHERE L.user_id=U.user_id AND R.dish_id=L.dish_id AND U.user_id=%s",userid)
+  global user
+  cursor = g.conn.execute("SELECT R.dish_id, R.dish_name FROM Recipe R, Likes L, Users U WHERE L.user_id=U.user_id AND R.dish_id=L.dish_id AND U.user_id='"+userid+"'")
   dishes = []
   for result in cursor:
     temp = dict()
@@ -350,7 +375,8 @@ def collection(userid=None):
     dishes.append(temp)
   cursor.close()
   dish = dict(dish = dishes)
-  return render_template("collection.html", **dish)
+  user_info = dict(user_info=user)
+  return render_template("collection.html", **dish, **user_info)
 
 # -----------------------------------------------------------------------------------------------
 
@@ -371,6 +397,8 @@ def tofollowing():
   
 @app.route('/following/<userid>')
 def following(userid=None):
+  global user
+  user_info = dict(user_info=user)
   cursor = g.conn.execute("SELECT A.auth_id, A.auth_name FROM Author A, Follows F, Users U WHERE F.user_id=U.user_id AND A.auth_id=F.auth_id AND U.user_id='"+userid+"'")
   authors = []
   for result in cursor:
@@ -380,7 +408,7 @@ def following(userid=None):
     authors.append(temp)
   cursor.close()
   author = dict(author = authors)
-  return render_template("following.html", **author)
+  return render_template("following.html", **author, **user_info)
 
 @app.route('/follow', methods=['POST'])
 def follow():
@@ -410,8 +438,9 @@ def signup_page():
 
 @app.route('/recs_page', methods=['POST', 'GET'])
 def recs_page():
+  global user
+  user_info = dict(user_info=user)
   if request.method == 'POST':
-    global user
     recommendation = []
     for key in request.form:
       recommendation.append(request.form[key])
@@ -461,9 +490,9 @@ def recs_page():
       temp['dish_id'] = "d0"
       dishes.append(temp)
     dish = dict(dish = dishes)
-    return render_template("recs.html", **dish)
+    return render_template("recs.html", **dish, **user_info)
   elif request.method == 'GET':
-    return render_template('recs.html')
+    return render_template('recs.html', **user_info)
 
 # -----------------------------------------------------------------------------------------------
 
@@ -475,6 +504,8 @@ def quant_ingredient():
 
 @app.route('/add_ingredient', methods=['POST', 'GET'])
 def add_ingredient():
+  global user
+  user_info = dict(user_info=user)
   if request.method == 'POST':
     ingredient_id = g.conn.execute('SELECT MAX(ASCII(ingredient_id)) FROM Ingredients')
     ingredient_name = request.form['ingredient_name']
@@ -487,9 +518,9 @@ def add_ingredient():
     if g.conn.execute('SELECT %s FROM Ingredients', ingredient_name) == False:
       g.conn.execute('INSERT INTO Ingredients(ingredient_id, ingredient_name, protein, carb, fat, calorie, units) VALUES (%s, %s, %d, %d, %d, %d, %s)', (ingredient_id, ingredient_name, protein, carb, fat, calorie, units))
     
-    return render_template('add_ingredient.html')
+    return render_template('add_ingredient.html',**user_info)
   elif  request.method == 'GET':
-    return render_template("add_ingredient.html")
+    return render_template("add_ingredient.html", **user_info)
 
 # -----------------------------------------------------------------------------------------------
 
