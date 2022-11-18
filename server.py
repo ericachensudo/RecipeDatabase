@@ -21,9 +21,12 @@ app = Flask(__name__, template_folder=tmpl_dir)
 
 global keyword
 global user
-global ingre_quant
+global ingre_count
+global ingred
 keyword=""
 user = {'id': "guest0", "name": "Guest", 'user_type': "a"}
+ingre_count=1
+ingred = ['start']
 
 # The following is a dummy URI that does not connect to a valid database. You will need to modify it to connect to your Part 2 database in order to use the data.
 #
@@ -143,7 +146,8 @@ def home():
 
 @app.route('/search', methods=['POST'])
 def search():
-  global keyword
+  global keyword, user
+  user_info = dict(user_info=user) 
   keyword = request.form['keyword']
   if not keyword:
     return redirect('/')
@@ -169,14 +173,15 @@ def search():
     temp['dish_id'] = "d0"
     dishes.append(temp)
   dish = dict(dish = dishes)
-  return render_template("home.html", **dish)
+  return render_template("home.html", **dish, **user_info)
 
 # -----------------------------------------------------------------------------------------------
 
 @app.route('/sort', methods=['POST'])
 def sort():
   sorting = request.form['sorting']
-  global keyword
+  global keyword, user
+  user_info = dict(user_info=user) 
   keyword = keyword.lower()
   criteria = sorting.split("_")[0]
   order = sorting.split("_")[1]
@@ -195,12 +200,14 @@ def sort():
     dishes.append(temp)
   cursor.close()
   dish = dict(dish = dishes)
-  return render_template("home.html", **dish)
+  return render_template("home.html", **dish, **user_info)
 
 # -----------------------------------------------------------------------------------------------
 
 @app.route('/view/<id>')
 def view(id=None):
+  global user
+  user_info = dict(user_info=user) 
   infos = dict()
   cursor = g.conn.execute("SELECT * FROM Recipe WHERE dish_id='"+id+"'") 
   content = cursor.fetchone()
@@ -258,10 +265,12 @@ def view(id=None):
   info = dict(info=infos)
   ingredient = dict(ingredient = ingredients)
 
-  return render_template('view.html',**info,**ingredient)
+  return render_template('view.html',**info,**ingredient, **user_info)
 
 @app.route('/view_auth/<auth_id>')
 def view_auth(auth_id=None):
+  global user
+  user_info = dict(user_info=user) 
   infos = dict()
   cursor = g.conn.execute("SELECT * FROM Author WHERE auth_id=%s", auth_id)
   result = cursor.fetchone()
@@ -278,7 +287,7 @@ def view_auth(auth_id=None):
   cursor.close()
   info = dict(info=infos)
   dish = dict(dish=dishes)
-  return render_template('view_auth.html', **info, **dish)
+  return render_template('view_auth.html', **info, **dish, **user_info)
 
 # -----------------------------------------------------------------------------------------------
 
@@ -299,28 +308,8 @@ def login():
     error = dict(error=error_msg)
     return render_template("login.html", **error)
 
-# def login():
-#   if request.method == 'POST':
-#     userid = request.form.get['id']
-#     pswd = request.form.get['pswd']
-#     cursor = g.conn.execute("SELECT user_id FROM Users WHERE user_id = %s, pswd = %s, userid, pswd")
-#     users = []
-      
-#     for id in cursor:
-#       users.append(users[0])
-#       cursor.close()
-#       context = disct(data = users)
-#       if len(users) != 0:
-#         return render_template("index.html", boolean=True)
-#       else:
-#         return render_template(login.html, boolean=True)
-
 @app.route('/')
 def login_page():
-  #login_type = "User"
-  #login_link = "/login"
-  #login_info = {"login_type": login_type, "login_link": login_link}
-  #login = dict(login=login_info)
   global user
   user = {'id': "guest0", "name": "Guest"}
   return render_template("login.html")
@@ -495,30 +484,75 @@ def recs_page():
     return render_template('recs.html', **user_info)
 
 # -----------------------------------------------------------------------------------------------
+@app.route('/next_ingred', methods=['POST', 'GET'])
+def next_ingred():
+  global user, ingred
+  user_info = dict(user_info=user)
+  if request.method=='POST':
+    #print(request.form)
+    temp = dict()
+    temp['id'] = request.form['ingredient_info'].split('_')[0]
+    temp['name'] = request.form['ingredient_info'].split('_')[1]
+    ingred.append(temp)
+    ingreds = dict(ingreds=ingred)
+    return redirect("add_ingredient")
+  elif request.method=='GET':
+    return render_template('add_ingredient.html', **ingreds,**user_info)
 
-@app.route('/quant_ingredient', methods=['POST', 'GET'])
-def quant_ingredient():
-  if request.method == 'POST':
-    ingre_quant = request.form["ingre_quant"]
-    return render_template('add_ingredient.html', **ingre_quant)
+
+
 
 @app.route('/add_ingredient', methods=['POST', 'GET'])
 def add_ingredient():
-  global user
+  global user, ingre_count
   user_info = dict(user_info=user)
   if request.method == 'POST':
-    ingredient_id = g.conn.execute('SELECT MAX(ASCII(ingredient_id)) FROM Ingredients')
+    ingre_count = int(request.form["ingre_count"])
+    ingre = []
+    ingre_id=1
+    for i in range(ingre_count):
+      ingre.append(str(ingre_id))
+      ingre_id+=1
+    ingreds = dict(ingred=ingre)
+    return render_template('add_ingredient.html', **ingreds,**user_info)
+  elif  request.method == 'GET':
+    cursor = g.conn.execute('select * from ingredients')
+    db_ingred = []
+    for result in cursor:
+      temp = dict()
+      temp['ingredient_id']=result['ingredient_id']
+      temp['ingredient_name']=result['ingredient_name']
+      db_ingred.append(temp)
+    db_ingreds = dict(db_ingreds=db_ingred)
+    ingreds = dict(ingreds=ingred)
+    return render_template("add_ingredient.html", **user_info, **db_ingreds, **ingreds)
+
+@app.route('/enter_ingredient', methods=['POST', 'GET'])
+def enter_ingredient():
+  #print(request.form)
+  global user, ingred, ingre_count
+  user_info = dict(user_info=user)
+  cursor = g.conn.execute('select ingredient_id from ingredients where ingredient_id=(select max(ingredient_id) from ingredients)')
+  result = cursor.fetchone()
+  current_id = int(result['ingredient_id'].split("i")[1])
+
+  if request.method == 'POST':
+    current_id += 1
+    ingredient_id = 'i'+str(current_id)
     ingredient_name = request.form['ingredient_name']
+    temp = dict()
+    temp['id'] = ingredient_id
+    temp['name'] = ingredient_name
+    ingred.append(temp)
     protein = request.form['protein']
     carb = request.form['carb']
     fat = request.form['fat']
     calorie = request.form['calorie']
-    units = request.form['units']
-
-    if g.conn.execute('SELECT %s FROM Ingredients', ingredient_name) == False:
-      g.conn.execute('INSERT INTO Ingredients(ingredient_id, ingredient_name, protein, carb, fat, calorie, units) VALUES (%s, %s, %d, %d, %d, %d, %s)', (ingredient_id, ingredient_name, protein, carb, fat, calorie, units))
-    
-    return render_template('add_ingredient.html',**user_info)
+    unit = request.form['units']
+    g.conn.execute('INSERT INTO Ingredients(ingredient_id, ingredient_name, protein, carb, fat, calorie, unit) VALUES (%s, %s, %s, %s, %s, %s, %s)', (ingredient_id, ingredient_name, protein, carb, fat, calorie, unit))
+    return redirect("add_ingredient")
+      #if g.conn.execute('SELECT %s FROM Ingredients', ingredient_name) == False:
+      #  g.conn.execute('INSERT INTO Ingredients(ingredient_id, ingredient_name, protein, carb, fat, calorie, units) VALUES (%s, %s, %d, %d, %d, %d, %s)', (ingredient_id, ingredient_name, protein, carb, fat, calorie, units))
   elif  request.method == 'GET':
     return render_template("add_ingredient.html", **user_info)
 
@@ -526,9 +560,10 @@ def add_ingredient():
 
 @app.route('/add_recipe', methods=['POST', 'GET'])
 def add_recipe():
+  global user, ingred
+  user_info = dict(user_info=user)
+  ingreds = dict(ingred=ingred)
   if request.method == 'POST':
-
-    print(request.form)
 
     ingredient_id = g.conn.execute('SELECT MAX(ASCII(ingredient_id)) FROM Ingredients')
     instructions = request.form['instructions']
@@ -573,9 +608,9 @@ def add_recipe():
     if g.conn.execute('SELECT (%s,%s) FROM Writes', (auth_id, dish_id)) == False:
       g.conn.execute('INSERT INTO Writes(auth_id, dish_id) VALUES (%s, %s)', (auth_id, dish_id))
 
-    return render_template('add_recipe.html')
+    return render_template('add_recipe.html', **ingreds,**user_info)
   elif  request.method == 'GET':
-    return render_template("add_recipe.html")
+    return render_template('add_recipe.html', **ingreds,**user_info)
 
 # -----------------------------------------------------------------------------------------------
 

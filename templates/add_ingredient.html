@@ -4,28 +4,38 @@
 
     <body>
         <h1> Add a Recipe</h1>
-
-        <form method="POST" action="/add_ingredient">
-            <p> Enter the number (1-10) of ingredients in your recipe:  </p>
-            <input type="number" id="ingre_quant" name="ingre_quant" min="1" max="10">>
-            <input type="submit" value="Enter">
+        <div>Find Existing Ingredients</div>
+        {% for n in ingreds %} 
+            <div>{{n.name}}</div>
+        {% endfor %}
+        <form method="POST" action="/next_ingred">
+            <select name="ingredient_info">
+                {% for x in db_ingreds %}
+                <option value="{{x.ingredient_id}}_{{x.ingredient_name}}">{{x.ingredient_name}}</option>
+                {% endfor%}
+            </select>
+            <input type="submit" value="Add">
         </form>
 
-              
-        <form method="POST" action="/add_ingredient"> 
-            {% for x in  %} 
-            keep track of last ingredient ID in system and increment
-            Ingredient Name: <input placeholder="Name of Ingredient" type="text" name="ingredient_name"> 
-            Protein: <input type="text" placeholder="Measurement in Grams" name="protein">
-            Carb: <input type="text" placeholder="Measurement in Grams" name="carb">
-            Fat: <input type="text" placeholder="Measurement in Grams" name="fat">
-            Calorie: <input type="text" placeholder="Number of Calorie" name="calorie">
-            Units: <input type="text" placeholder="Measurement in Grams" name="units">
-            {% endfor %}
+        <div>OR</div>
+
+        <form method="POST" action="/enter_ingredient">
+            Add New Ingredients
+            <div class="ingred_input">
+            Ingredient Name: <input placeholder="Name of Ingredient" type="text" name="ingredient_name{{n}}"> 
+            Protein: <input type="text" placeholder="Measurement in Grams" name="protein{{n}}">g
+            Carb: <input type="text" placeholder="Measurement in Grams" name="carb{{n}}">g
+            Fat: <input type="text" placeholder="Measurement in Grams" name="fat{{n}}">g
+            Calorie: <input type="text" placeholder="Number of Calorie" name="calorie{{n}}">g
+            <div>Unit: <input type="text" placeholder="For example: 1tsp " name="units{{n}}"></div>
+            </div>
+            <input type="submit" value="Enter Ingredients">
         </form>
         
+        <p><a href="/add_recipe"> Continue to add more details</a></p>
+
         <input class="btn btn-default" type="submit" value="Add New Recipe">
-        <p><a href="add_recipe"> Continue to add more details</a></p>
+        
 
     </body>
 {% endblock %}
