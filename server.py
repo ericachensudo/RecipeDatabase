@@ -153,15 +153,15 @@ def search():
   if not keyword:
     return redirect('/')
   keyword = keyword.lower()
-  by_dish = "SELECT R.dish_id, R.dish_name FROM Recipe R WHERE LOWER(R.dish_name) LIKE '%%"+keyword+"%%'"
-  by_author = "SELECT R.dish_id, R.dish_name FROM Recipe R, Writes W, Author A WHERE R.dish_id=W.dish_id AND W.auth_id=A.auth_id AND LOWER(A.auth_name) LIKE '%%"+keyword+"%%'"
-  by_ingredients = "SELECT R.dish_id, R.dish_name FROM Recipe R, Contains C, Ingredients I WHERE R.dish_id=C.dish_id AND C.ingredient_id=I.ingredient_id AND LOWER(I.ingredient_name) LIKE '%%"+keyword+"%%'"
-  by_cookware = "SELECT R.dish_id, R.dish_name FROM Recipe R, Utilizes U, Cookware C WHERE R.dish_id=U.dish_id AND U.cookware_id=C.cookware_id AND LOWER(C.cookware_name) LIKE '%%"+keyword+"%%'"
+  by_dish = "SELECT R.dish_id, R.dish_name FROM Recipe R WHERE LOWER(R.dish_name) LIKE %s"
+  by_author = "SELECT R.dish_id, R.dish_name FROM Recipe R, Writes W, Author A WHERE R.dish_id=W.dish_id AND W.auth_id=A.auth_id AND LOWER(A.auth_name) LIKE %s"
+  by_cuisine = "SELECT R.dish_id, R.dish_name FROM Recipe R, Type_of T, Cuisine C WHERE R.dish_id=T.dish_id AND C.cuisine_id=T.cuisine_id AND LOWER(C.region_name) LIKE %s"
+  by_ingredients = "SELECT R.dish_id, R.dish_name FROM Recipe R, Contains C, Ingredients I WHERE R.dish_id=C.dish_id AND C.ingredient_id=I.ingredient_id AND LOWER(I.ingredient_name) LIKE %s"
+  by_cookware = "SELECT R.dish_id, R.dish_name FROM Recipe R, Utilizes U, Cookware C WHERE R.dish_id=U.dish_id AND U.cookware_id=C.cookware_id AND LOWER(C.cookware_name) LIKE %s"
   
   connect = ' UNION '
-  query = by_dish + connect + by_author + connect + by_ingredients + connect + by_cookware
-
-  cursor = g.conn.execute(query)
+  query = by_dish + connect + by_author + connect + by_ingredients + connect + by_cookware + connect + by_cuisine
+  cursor = g.conn.execute(query,('%'+keyword+'%','%'+keyword+'%','%'+keyword+'%','%'+keyword+'%','%'+keyword+'%'))
   dishes = []
   for result in cursor:
     temp = dict()
