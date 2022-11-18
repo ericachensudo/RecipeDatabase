@@ -210,7 +210,7 @@ def view(id=None):
   global user
   user_info = dict(user_info=user) 
   infos = dict()
-  cursor = g.conn.execute("SELECT * FROM Recipe WHERE dish_id='"+id+"'") 
+  cursor = g.conn.execute("SELECT * FROM Recipe WHERE dish_id=%s",(id)) 
   content = cursor.fetchone()
   infos['dish_id'] = content['dish_id']
   infos['dish_name'] = content['dish_name']
@@ -223,18 +223,18 @@ def view(id=None):
   infos['instruction'] = content['instructions']
   cursor.close()
 
-  cursor = g.conn.execute("SELECT C.region_name FROM Recipe R, Type_of T, Cuisine C WHERE C.cuisine_id=T.cuisine_id and T.dish_id=R.dish_id and R.dish_id='"+id+"'") 
+  cursor = g.conn.execute("SELECT C.region_name FROM Recipe R, Type_of T, Cuisine C WHERE C.cuisine_id=T.cuisine_id and T.dish_id=R.dish_id and R.dish_id=%s",(id)) 
   content = cursor.fetchone()
   infos['cuisine'] = content['region_name']
   cursor.close()
 
-  cursor = g.conn.execute("SELECT A.auth_id, A.auth_name FROM Recipe R, Writes W, Author A WHERE W.auth_id=A.auth_id and W.dish_id=R.dish_id and R.dish_id='"+id+"'") 
+  cursor = g.conn.execute("SELECT A.auth_id, A.auth_name FROM Recipe R, Writes W, Author A WHERE W.auth_id=A.auth_id and W.dish_id=R.dish_id and R.dish_id=%s",(id)) 
   content = cursor.fetchone()
   infos['auth_id'] = content['auth_id']
   infos['auth_name'] = content['auth_name']
   cursor.close()
 
-  cursor = g.conn.execute("SELECT C.cookware_name, C.is_electric FROM Recipe R, Utilizes U, Cookware C WHERE C.cookware_id=U.cookware_id and U.dish_id=R.dish_id and R.dish_id='"+id+"'") 
+  cursor = g.conn.execute("SELECT C.cookware_name, C.is_electric FROM Recipe R, Utilizes U, Cookware C WHERE C.cookware_id=U.cookware_id and U.dish_id=R.dish_id and R.dish_id=%s",(id)) 
   content = cursor.fetchone()
   infos['cookware'] = content['cookware_name']
   is_electric = content['is_electric']
@@ -244,7 +244,7 @@ def view(id=None):
   infos['electric'] = electric
   cursor.close()
 
-  cursor = g.conn.execute("SELECT I.ingredient_id, I.ingredient_name, I.carb, I.protein, I.fat, I.calorie, I.unit, C.quantity FROM Recipe R, Contains C, Ingredients I WHERE I.ingredient_id=C.ingredient_id and R.dish_id=C.dish_id and C.dish_id='"+id+"'") 
+  cursor = g.conn.execute("SELECT I.ingredient_id, I.ingredient_name, I.carb, I.protein, I.fat, I.calorie, I.unit, C.quantity FROM Recipe R, Contains C, Ingredients I WHERE I.ingredient_id=C.ingredient_id and R.dish_id=C.dish_id and C.dish_id=%s",(id)) 
   ingredients = []
   cal = 0
   for result in cursor:
@@ -322,7 +322,7 @@ def auth_login():
   global user
   auth_email = request.form['email']
   pswd = request.form['pswd']
-  cursor = g.conn.execute("SELECT * FROM Author WHERE auth_email='"+auth_email+"' AND auth_password='"+pswd+"'")
+  cursor = g.conn.execute("SELECT * FROM Author WHERE auth_email='"+auth_email+"' AND auth_password=%s",(pswd))
   content = cursor.fetchone()
   if content:
     user['id'] = content['auth_id']
@@ -356,7 +356,7 @@ def tocollection():
 @app.route('/collection/<userid>')
 def collection(userid=None):
   global user
-  cursor = g.conn.execute("SELECT R.dish_id, R.dish_name FROM Recipe R, Likes L, Users U WHERE L.user_id=U.user_id AND R.dish_id=L.dish_id AND U.user_id='"+userid+"'")
+  cursor = g.conn.execute("SELECT R.dish_id, R.dish_name FROM Recipe R, Likes L, Users U WHERE L.user_id=U.user_id AND R.dish_id=L.dish_id AND U.user_id=%s",(userid))
   dishes = []
   for result in cursor:
     temp = dict()
@@ -374,7 +374,10 @@ def collection(userid=None):
 def like():
   global user
   dish_id = request.form['id']
-  g.conn.execute('INSERT INTO likes VALUES (%s, %s)', user['id'], dish_id)
+  cursor = g.conn.execute('SELECT R.dish_id, R.dish_name FROM Recipe R, Likes L, Users U WHERE L.user_id=U.user_id AND R.dish_id=L.dish_id AND R.dish_id=%s AND U.user_id=%s', (dish_id, user['id']))
+  result = cursor.fetchone()
+  if not result:
+    g.conn.execute('INSERT INTO likes VALUES (%s, %s)', user['id'], dish_id)
   return redirect("/collection/"+user['id'])
 
 # -----------------------------------------------------------------------------------------------
@@ -389,7 +392,7 @@ def tofollowing():
 def following(userid=None):
   global user
   user_info = dict(user_info=user)
-  cursor = g.conn.execute("SELECT A.auth_id, A.auth_name FROM Author A, Follows F, Users U WHERE F.user_id=U.user_id AND A.auth_id=F.auth_id AND U.user_id='"+userid+"'")
+  cursor = g.conn.execute("SELECT A.auth_id, A.auth_name FROM Author A, Follows F, Users U WHERE F.user_id=U.user_id AND A.auth_id=F.auth_id AND U.user_id=%s", (userid))
   authors = []
   for result in cursor:
     temp = dict()
@@ -404,7 +407,10 @@ def following(userid=None):
 def follow():
   global user
   auth_id = request.form['id']
-  if g.conn.execute('SELECT (%s, %s) FROM follows', (user['id'], auth_id)) == False:
+  cursor = g.conn.execute('SELECT * FROM Author A, Follows F, Users U WHERE F.user_id=U.user_id AND A.auth_id=F.auth_id AND A.auth_id=%s AND U.user_id=%s', (auth_id, user['id'], ))
+  result = cursor.fetchone()
+  print(result)
+  if not result:
     g.conn.execute('INSERT INTO follows VALUES (%s, %s)', (user['id'], auth_id))
   return redirect("/following/"+user['id'])
 
@@ -443,7 +449,7 @@ def recs_page():
     protein = 'protein'
 
     s = 'SELECT dish_id, dish_name FROM Recipe WHERE is_spicy = True'
-    l = 'SELECT R.dish_id, R.dish_name FROM Recipe r, Likes l WHERE r.dish_id=l.dish_id GROUP BY R.dish_id HAVING COUNT(L.dish_id)>1'
+    l = 'SELECT R.dish_id, R.dish_name FROM Recipe r, Likes l WHERE r.dish_id=l.dish_id GROUP BY R.dish_id HAVING COUNT(L.dish_id)>2'
     q = 'SELECT dish_id, dish_name FROM Recipe WHERE prep_time < 30'
     d = 'SELECT R.dish_id, R.dish_name FROM Recipe R, Contains C, Ingredients I WHERE R.dish_id=C.dish_id AND C.ingredient_id=I.ingredient_id GROUP BY R.dish_id HAVING SUM(I.calorie*C.quantity)<600'
     p = 'SELECT R.dish_id, R.dish_name FROM Recipe R, Contains C, Ingredients I WHERE R.dish_id=C.dish_id AND C.ingredient_id=I.ingredient_id GROUP BY R.dish_id HAVING SUM(I.protein*C.quantity)>50'
