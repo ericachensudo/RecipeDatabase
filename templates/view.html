@@ -5,6 +5,7 @@
 <body>
   
   <h2>{{info.dish_name}} ({{info.cuisine}})</h2>
+  <div class="like_follow">{{info.likes}} Likes</div>
   {% if user_info.id!='guest0' %}
     {% if info.liked==False %}
     <form method="POST" action="/like">
@@ -14,10 +15,13 @@
     <form method="POST" action="/unlike">
       <input class="invisible" type="text" name="id" value="{{info.dish_id}}"> <input type="submit" value="Unlike">
     </form>
-    {% endif %}
+    {% endif %} 
   {% endif %}
+  
+  
 
   <h3>Chef: <a href="/view_auth/{{info.auth_id}}">{{info.auth_name}}</a></h3>
+  <div class="like_follow">{{info.follows}} Followers</div>
   {% if user_info.id!='guest0' %}
     {% if info.followed==False %}
     <form method="POST" action="/follow">
@@ -29,6 +33,7 @@
     </form>
     {% endif %}
   {% endif %}
+  
 
   <h3>Prep Time: {{info.prep_time}} min</h3>
   <h3>Spicy: {{info.spicy}}, Cookware: {{info.cookware}}({{info.electric}})</h3>
@@ -36,7 +41,7 @@
   <h3>Ingredient List</h3>
   <ul class="ingredient_list">
     {% for n in ingredient %}
-    <li>{{n.name}}, {{n.quantity}} {{n.unit}}</li>
+    <li>{{n.name}}, {{n.measure}}</li>
     {% endfor %}
   </ul>
 

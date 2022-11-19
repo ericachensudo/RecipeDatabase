@@ -4,17 +4,19 @@
 
 <body>
   <h2>Recipe of the Week</h2>
+  {% if mode.search==False %}
   <form method="POST" action="/sort">
-    <input type="radio" id="calorie_asc" name="sorting" value="calorie_asc"> Calorie (Ascending)
-    <input type="radio" id="calorie_desc" name="sorting" value="calorie_desc"> Calorie (Descending)
-    <input type="radio" id="prep_asc" name="sorting" value="prep_asc"> Prep Time (Ascending)
-    <input type="radio" id="prep_desc" name="sorting" value="prep_desc"> Prep Time (Descending)
-    <input type="submit" value="Sort">
-</form>
-{% if mode.search %}
-<p>Search results for "{{mode.search}}":
+    <input type="radio" id="pop_desc" name="sorting" value="pop_desc"> Popularity (High to Low)
+    <input type="radio" id="calorie_asc" name="sorting" value="calorie_asc"> Calorie (Low to High)
+    <input type="radio" id="prep_asc" name="sorting" value="prep_asc"> Prep Time (Low to High)
 
-</p>
+    <input type="radio" id="calorie_desc" name="sorting" value="calorie_desc"> Calorie (High to Low)
+    <input type="radio" id="prep_desc" name="sorting" value="prep_desc"> Prep Time (High to Low)
+    <div><input type="submit" value="Sort"></div>
+</form>
+{% endif %}
+{% if mode.search %}
+<p>Search results for "{{mode.search}}"</p>
 {% endif %}
 
   <ul class="recipe_list">

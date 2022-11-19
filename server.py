@@ -129,7 +129,7 @@ def home():
   #  names.append(result['name'])  # can also be accessed using result[0]
   #cursor.close()
 
-  cursor = g.conn.execute("SELECT dish_id, dish_name FROM recipe")
+  cursor = g.conn.execute("SELECT dish_id, dish_name FROM recipe ORDER BY dish_name ASC")
   dishes = []
   for result in cursor:
     temp = dict()
@@ -145,14 +145,14 @@ def home():
 
 # -----------------------------------------------------------------------------------------------
 
-@app.route('/search', methods=['POST'])
+@app.route('/search', methods=['POST','GET'])
 def search():
   global keyword, user, modes
   user_info = dict(user_info=user) 
   keyword = request.form['keyword']
   modes['search'] = keyword
   if not keyword:
-    return redirect('/')
+    return redirect('/home')
     
   keyword = keyword.lower()
   by_dish = "SELECT R.dish_id, R.dish_name FROM Recipe R WHERE LOWER(R.dish_name) LIKE %s"
@@ -162,7 +162,8 @@ def search():
   by_cookware = "SELECT R.dish_id, R.dish_name FROM Recipe R, Utilizes U, Cookware C WHERE R.dish_id=U.dish_id AND U.cookware_id=C.cookware_id AND LOWER(C.cookware_name) LIKE %s"
   
   connect = ' UNION '
-  query = by_dish + connect + by_author + connect + by_ingredients + connect + by_cookware + connect + by_cuisine
+  order = ' ORDER BY dish_name ASC'
+  query = by_dish + connect + by_author + connect + by_ingredients + connect + by_cookware + connect + by_cuisine + order
   cursor = g.conn.execute(query,('%'+keyword+'%','%'+keyword+'%','%'+keyword+'%','%'+keyword+'%','%'+keyword+'%'))
   dishes = []
   for result in cursor:
@@ -209,28 +210,19 @@ def sort():
     cursor = g.conn.execute("SELECT R.dish_id, R.dish_name, SUM(I.calorie*C.quantity) AS calorie FROM Recipe R, Contains C, Ingredients I WHERE R.dish_id=C.dish_id AND C.ingredient_id=I.ingredient_id AND LOWER(R.dish_name) LIKE '%%"+keyword+"%%' GROUP BY R.dish_id ORDER BY calorie "+order+", R.dish_name "+order) 
   elif criteria=="prep":
     criteria="prep_time"
-    cursor = g.conn.execute("SELECT dish_id, dish_name, prep_time FROM Recipe WHERE LOWER(dish_name) LIKE '%%"+keyword+"%%' ORDER BY prep_time "+order+", dish_name "+order) 
+    cursor = g.conn.execute("SELECT dish_id, dish_name, prep_time FROM Recipe WHERE LOWER(dish_name) LIKE '%%"+keyword+"%%' ORDER BY prep_time "+order+", dish_name "+order)
+  elif criteria=="pop":
+    l = 'SELECT R.dish_id, R.dish_name FROM Recipe r, Likes l WHERE r.dish_id=l.dish_id GROUP BY R.dish_id HAVING COUNT(L.dish_id)>3'
+    cursor = g.conn.execute('SELECT R.dish_id, R.dish_name, count(r.dish_id) as num FROM Recipe r, Likes l WHERE r.dish_id=l.dish_id GROUP BY r.dish_id ORDER BY num '+order+', dish_name asc')
+
+
   dishes = []
   for result in cursor:
     temp = dict()
     temp['dish_id'] = result['dish_id']
     temp['dish_name'] = result['dish_name']
-    cursor1 = g.conn.execute("SELECT A.auth_name FROM Recipe R, Writes W, Author A WHERE R.dish_id=W.dish_id AND W.auth_id=A.auth_id AND R.dish_id=%s", (temp['dish_id']))
-    output = cursor1.fetchone()
-    temp['auth_name'] = output[0]
-    cursor1.close()
 
-    cursor1 = g.conn.execute("SELECT C.region_name FROM Recipe R, Type_of T, Cuisine C WHERE R.dish_id=T.dish_id AND C.cuisine_id=T.cuisine_id AND R.dish_id=%s", (temp['dish_id']))
-    output = cursor1.fetchone()
-    temp['cuisine_name'] = output[0]
-    cursor1.close()
-
-    cursor1 = g.conn.execute("SELECT C.cookware_name FROM Recipe R, Utilizes U, Cookware C WHERE R.dish_id=U.dish_id AND U.cookware_id=C.cookware_id AND R.dish_id=%s", (temp['dish_id']))
-    output = cursor1.fetchone()
-    temp['cookware_name'] = output[0]
-    cursor1.close()
-
-    temp[criteria] = result[criteria]
+    #temp[criteria] = result[criteria]
     dishes.append(temp)
   cursor.close()
   dish = dict(dish = dishes)
@@ -257,6 +249,11 @@ def view(id=None):
   infos['instruction'] = content['instructions']
   cursor.close()
 
+  cursor = g.conn.execute('select count(dish_id) from likes where dish_id=%s',(infos['dish_id']))
+  content = cursor.fetchone()
+  infos['likes'] = content[0]
+  cursor.close()
+
   cursor = g.conn.execute("SELECT C.region_name FROM Recipe R, Type_of T, Cuisine C WHERE C.cuisine_id=T.cuisine_id and T.dish_id=R.dish_id and R.dish_id=%s",(id)) 
   content = cursor.fetchone()
   infos['cuisine'] = content['region_name']
@@ -266,6 +263,11 @@ def view(id=None):
   content = cursor.fetchone()
   infos['auth_id'] = content['auth_id']
   infos['auth_name'] = content['auth_name']
+  cursor.close()
+  
+  cursor = g.conn.execute('select count(auth_id) from follows where auth_id=%s',(infos['auth_id']))
+  content = cursor.fetchone()
+  infos['follows'] = content[0]
   cursor.close()
 
   cursor = g.conn.execute("SELECT C.cookware_name, C.is_electric FROM Recipe R, Utilizes U, Cookware C WHERE C.cookware_id=U.cookware_id and U.dish_id=R.dish_id and R.dish_id=%s",(id)) 
@@ -285,8 +287,9 @@ def view(id=None):
     temp = dict()
     temp['name'] = result['ingredient_name']
     quantity = result['quantity']
-    temp['quantity'] = quantity
-    temp['unit'] = result['unit']
+    base, unit = result['unit'].split('_')
+    measure = str(int(base)*quantity)+" "+unit
+    temp['measure'] = measure
     temp['carb'] = result['carb']*quantity
     temp['protein'] = result['protein']*quantity
     temp['fat'] = result['fat']*quantity
@@ -464,6 +467,12 @@ def recs_page():
   global user
   user_info = dict(user_info=user)
   if request.method == 'POST':
+    if not request.form:
+      dishes = []
+      temp = {'dish_id':'d00'}
+      dishes.append(temp)
+      dish = dict(dish = dishes)
+      return render_template("recs.html", **dish, **user_info)
     recommendation = []
     for key in request.form:
       recommendation.append(request.form[key])
@@ -476,14 +485,15 @@ def recs_page():
     protein = 'protein'
 
     s = 'SELECT dish_id, dish_name FROM Recipe WHERE is_spicy = True'
-    l = 'SELECT R.dish_id, R.dish_name FROM Recipe r, Likes l WHERE r.dish_id=l.dish_id GROUP BY R.dish_id HAVING COUNT(L.dish_id)>2'
+    l = 'SELECT R.dish_id, R.dish_name FROM Recipe r, Likes l WHERE r.dish_id=l.dish_id GROUP BY R.dish_id HAVING COUNT(L.dish_id)>3'
     q = 'SELECT dish_id, dish_name FROM Recipe WHERE prep_time < 30'
-    d = 'SELECT R.dish_id, R.dish_name FROM Recipe R, Contains C, Ingredients I WHERE R.dish_id=C.dish_id AND C.ingredient_id=I.ingredient_id GROUP BY R.dish_id HAVING SUM(I.calorie*C.quantity)<600'
-    p = 'SELECT R.dish_id, R.dish_name FROM Recipe R, Contains C, Ingredients I WHERE R.dish_id=C.dish_id AND C.ingredient_id=I.ingredient_id GROUP BY R.dish_id HAVING SUM(I.protein*C.quantity)>50'
+    d = 'SELECT R.dish_id, R.dish_name FROM Recipe R, Contains C, Ingredients I WHERE R.dish_id=C.dish_id AND C.ingredient_id=I.ingredient_id GROUP BY R.dish_id HAVING SUM(I.calorie*C.quantity)<800'
+    p = 'SELECT R.dish_id, R.dish_name FROM Recipe R, Contains C, Ingredients I WHERE R.dish_id=C.dish_id AND C.ingredient_id=I.ingredient_id GROUP BY R.dish_id HAVING SUM(I.protein*C.quantity)>30'
 
     plus = ' INTERSECT '
     res = ''
     counter = 0
+    order = ' ORDER BY dish_name ASC'
 
     for n in user['recommendation']:
       if counter>0:
@@ -500,7 +510,7 @@ def recs_page():
         res += p
       counter +=1
       
-    cursor = g.conn.execute(res)
+    cursor = g.conn.execute(res+order)
     dishes = []
     for result in cursor:
       temp = dict()

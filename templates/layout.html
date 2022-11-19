@@ -12,6 +12,9 @@
       padding: 0;
     }
 
+    .logo{
+      color: #7A3803;
+    }
     .nav_bar{
       padding: 10px;
       margin: 0;
@@ -20,13 +23,21 @@
       border-radius: 10px;
     }
 
+    .like_follow{
+      background-color: #d6a48b;
+      border-radius: 5px;
+      width: 150px;
+      text-align: center;
+    }
+
     .invisible{
       display: none;
     }
 
     a:link { 
       color: #7A3803;
-      text-decoration: none; }
+      text-decoration: none; 
+    }
 
     .ingred_input{
       margin-bottom: 20px;
@@ -38,14 +49,13 @@
       font-size: smaller;
       margin-bottom: 10px;
     }
-
   </style>
 
 
 <body>
   <title>Recipe Book</title>
 
-  <h1>Recipe Book</h1>
+  <a class="logo" href="/home"><h1>Recipe Book</h1></a>
   <div >
     <a class="nav_bar" href="/home">Home</a>
     {% if user_info.user_type=="a" %}
@@ -59,7 +69,7 @@
     <a class="nav_bar" href="/">Sign In</a>
     {% else %}
     <a class="nav_bar" href="/">Log Out</a>
-    Welcome, {{user_info.name}}@
+    Welcome, {{user_info.name}}!
     {% endif %}
     <form class="nav_bar" method="POST" action="/search">
       <input type="text" name="keyword"> <input type="submit" value="Search">

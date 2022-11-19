@@ -11,14 +11,16 @@
             Spicy <input type="checkbox" value= "is_spicy" name="preference1">
             Quick <input type="checkbox" value="prep_time" name="preference2">
             Diet <input type="checkbox" value="calorie" name="preference3">
-            Liked <input type="checkbox" value="liked" name="preference4">
-            Protein <input type="checkbox" value="protein" name="preference5">
+            Popular <input type="checkbox" value="liked" name="preference4">
+            High-Protein <input type="checkbox" value="protein" name="preference5">
         <input type="submit" value="Recommendations">
         </form>
         <ul class="recipe_list">
             {% for n in dish %}
             {% if n.dish_id == "d0" %}
               <div>Sorry, no results meet your criteria.</div>
+            {% elif n.dish_id == "d00" %}
+              <div>Please make selections.</div>
             {% else %}
             <li><a href="/view/{{n.dish_id}}">{{n.dish_name}}</a></li>
             {% endif %}
