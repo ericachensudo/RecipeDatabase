@@ -24,12 +24,16 @@
   <div class="like_follow">{{info.follows}} Followers</div>
   {% if user_info.id!='guest0' %}
     {% if info.followed==False %}
-    <form method="POST" action="/follow">
-      <input class="invisible" type="text" name="id" value="{{info.auth_id}}"> <input type="submit" value="Follow">
+    <form method="POST" action="/followv">
+      <input class="invisible" type="text" name="id" value="{{info.auth_id}}">
+      <input class="invisible" type="text" name="dish_id" value="{{info.dish_id}}">
+      <input type="submit" value="Follow">
     </form>
     {% else %}
-    <form method="POST" action="/unfollow">
-      <input class="invisible" type="text" name="id" value="{{info.auth_id}}"> <input type="submit" value="Unfollow">
+    <form method="POST" action="/unfollowv">
+      <input class="invisible" type="text" name="id" value="{{info.auth_id}}">
+      <input class="invisible" type="text" name="dish_id" value="{{info.dish_id}}"> 
+      <input type="submit" value="Following">
     </form>
     {% endif %}
   {% endif %}

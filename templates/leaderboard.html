@@ -1,0 +1,34 @@
+{% extends "layout.html" %}
+
+{% block content %}
+
+
+    <body>
+        <h2>Chef Leader Board</h2>
+        
+
+        
+        <ul class="recipe_list">
+            {% for n in auth %}
+            
+            <li><a href="/view_auth/{{n.auth_id}}">{{n.rank}}. {{n.auth_name}} </a></li>
+            {% if user_info.id!='guest0' %}
+              {% if n.followed==False %}
+              <form method="POST" action="/follow/{{n.auth_id}}">
+                <input class="invisible" type="text" name="id" value="{{n.auth_id}}">
+                <input class="invisible" type="text" name="dish_id" value="{{n.dish_id}}">
+                <input type="submit" value="Follow">
+              </form>
+              {% else %}
+              <form method="POST" action="/unfollow/{{n.auth_id}}">
+                <input class="invisible" type="text" name="id" value="{{n.auth_id}}">
+                <input class="invisible" type="text" name="dish_id" value="{{n.dish_id}}"> 
+                <input type="submit" value="Following">
+              </form>
+              {% endif %}
+            {% endif %}
+            
+            {% endfor %}
+        </ul>
+    </body>
+{% endblock %}

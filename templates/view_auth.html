@@ -4,14 +4,15 @@
 
 <body>
   <h2>Chef: {{info.auth_name}}</h2>
+  <div class="like_follow">{{info.follows}} Followers</div>
   {% if user_info.id!='guest0' %}
     {% if info.followed==False %}
-    <form method="POST" action="/follow">
+    <form method="POST" action="/followa">
       <input class="invisible" type="text" name="id" value="{{info.auth_id}}"> <input type="submit" value="Follow">
     </form>
     {% else %}
-    <form method="POST" action="/unfollow">
-      <input class="invisible" type="text" name="id" value="{{info.auth_id}}"> <input type="submit" value="Unfollow">
+    <form method="POST" action="/unfollowa">
+      <input class="invisible" type="text" name="id" value="{{info.auth_id}}"> <input type="submit" value="Following">
     </form>
     {% endif %}
   {% endif %}

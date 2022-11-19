@@ -144,6 +144,31 @@ def home():
   return render_template("home.html", **dish, **user_info, **mode)
 
 # -----------------------------------------------------------------------------------------------
+@app.route('/leaderboard')
+def leaderboard():
+  global keyword, user, modes
+  cursor = g.conn.execute("SELECT a.auth_id FROM author a, follows f WHERE a.auth_id=F.auth_id AND F.user_id=%s",(user['id']))
+  follow_list = []
+  for result in cursor:
+    follow_list.append(result[0])
+  cursor.close()
+  cursor = g.conn.execute("SELECT a.auth_id, a.auth_name, count(a.auth_id) as num FROM author a, follows f WHERE a.auth_id=F.auth_id GROUP BY a.auth_id ORDER BY num DESC, a.auth_name ASC")
+  auths = []
+  counter=0
+  for result in cursor:
+    counter += 1
+    temp = dict()
+    temp['rank'] = counter
+    temp['auth_id'] = result['auth_id']
+    temp['auth_name'] = result['auth_name']
+    temp['followed'] = result['auth_id'] in follow_list
+    auths.append(temp)
+  cursor.close()
+  auth = dict(auth = auths)
+  user_info = dict(user_info=user)
+  mode = dict(mode=modes)  
+
+  return render_template("leaderboard.html", **auth, **user_info, **mode)
 
 @app.route('/search', methods=['POST','GET'])
 def search():
@@ -341,6 +366,10 @@ def view_auth(auth_id=None):
     temp['dish_name'] = result['dish_name']
     dishes.append(temp)
   cursor.close()
+  cursor = g.conn.execute('select count(auth_id) from follows where auth_id=%s',(infos['auth_id']))
+  content = cursor.fetchone()
+  infos['follows'] = content[0]
+  cursor.close()
   cursor = g.conn.execute('SELECT * FROM Author A, Follows F, Users U WHERE F.user_id=U.user_id AND A.auth_id=F.auth_id AND A.auth_id=%s AND U.user_id=%s', (infos['auth_id'], user['id'], ))
   result = cursor.fetchone()
   if result:
@@ -410,14 +439,15 @@ def like():
   result = cursor.fetchone()
   if not result:
     g.conn.execute('INSERT INTO likes VALUES (%s, %s)', user['id'], dish_id)
-  return redirect("/collection/"+user['id'])
+  #return redirect("/collection/"+user['id'])
+  return redirect("/view/"+dish_id)
 
 @app.route('/unlike', methods=['POST'])
 def unlike():
   global user
   dish_id = request.form['id']
   g.conn.execute('delete from likes where dish_id=%s and user_id=%s', (dish_id, user['id'], ))
-  return redirect("/collection/"+user['id'])
+  return redirect("/view/"+dish_id)
 
 # -----------------------------------------------------------------------------------------------
 
@@ -442,8 +472,25 @@ def following(userid=None):
   author = dict(author = authors)
   return render_template("following.html", **author, **user_info)
 
-@app.route('/follow', methods=['POST'])
-def follow():
+@app.route('/follow/<auth_id>', methods=['POST'])
+def follow(auth_id=None):
+  global user
+  #auth_id = request.form['id']
+  cursor = g.conn.execute('SELECT * FROM Author A, Follows F, Users U WHERE F.user_id=U.user_id AND A.auth_id=F.auth_id AND A.auth_id=%s AND U.user_id=%s', (auth_id, user['id'], ))
+  result = cursor.fetchone()
+  if not result:
+    g.conn.execute('INSERT INTO follows VALUES (%s, %s)', (user['id'], auth_id))
+  return redirect('/leaderboard')
+
+@app.route('/unfollow/<auth_id>', methods=['POST'])
+def unfollow(auth_id=None):
+  global user
+  #auth_id = request.form['id']
+  g.conn.execute('delete from follows where auth_id=%s and user_id=%s', (auth_id, user['id'], ))
+  return redirect('/leaderboard')
+
+@app.route('/followa', methods=['POST'])
+def followa():
   global user
   auth_id = request.form['id']
   cursor = g.conn.execute('SELECT * FROM Author A, Follows F, Users U WHERE F.user_id=U.user_id AND A.auth_id=F.auth_id AND A.auth_id=%s AND U.user_id=%s', (auth_id, user['id'], ))
@@ -451,15 +498,34 @@ def follow():
   print(result)
   if not result:
     g.conn.execute('INSERT INTO follows VALUES (%s, %s)', (user['id'], auth_id))
-  return redirect("/following/"+user['id'])
+  return redirect('/view_auth/'+auth_id)
 
-@app.route('/unfollow', methods=['POST'])
-def unfollow():
+@app.route('/unfollowa', methods=['POST'])
+def unfollowa():
   global user
   auth_id = request.form['id']
   g.conn.execute('delete from follows where auth_id=%s and user_id=%s', (auth_id, user['id'], ))
-  return redirect("/following/"+user['id'])
+  return redirect('/view_auth/'+auth_id)
 
+@app.route('/followv', methods=['POST'])
+def followv():
+  global user
+  auth_id = request.form['id']
+  dish_id = request.form['dish_id']
+  cursor = g.conn.execute('SELECT * FROM Author A, Follows F, Users U WHERE F.user_id=U.user_id AND A.auth_id=F.auth_id AND A.auth_id=%s AND U.user_id=%s', (auth_id, user['id'], ))
+  result = cursor.fetchone()
+  print(result)
+  if not result:
+    g.conn.execute('INSERT INTO follows VALUES (%s, %s)', (user['id'], auth_id))
+  return redirect("/view/"+dish_id)
+
+@app.route('/unfollowv', methods=['POST'])
+def unfollowv():
+  global user
+  auth_id = request.form['id']
+  dish_id = request.form['dish_id']
+  g.conn.execute('delete from follows where auth_id=%s and user_id=%s', (auth_id, user['id'], ))
+  return redirect("/view/"+dish_id)
 # -----------------------------------------------------------------------------------------------
 
 @app.route('/recs_page', methods=['POST', 'GET'])
