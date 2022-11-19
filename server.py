@@ -394,7 +394,6 @@ def login():
   if content:
     user['id'] = content['user_id']
     user['name'] = content['user_name']
-    #return redirect("/collection/"+user['id'])
     return redirect("/home")
   else:
     error_msg = "Incorrect user id and password combination."
