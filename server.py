@@ -227,6 +227,8 @@ def sort():
   global keyword, user, modes
   user_info = dict(user_info=user) 
   keyword = keyword.lower()
+  if not request.form:
+    return redirect('/home')
   sorting = request.form['sorting']
   criteria = sorting.split("_")[0]
   order = sorting.split("_")[1]
