@@ -1,0 +1,32 @@
+{% extends "layout.html" %}
+
+{% block content %}
+
+    <body>
+        <h1> Add a Recipe</h1>
+
+        <form method="POST" action="/add_recipe">
+
+<!-- keep track of last author ID in system and increment -->
+<!--         <p> Author Name: <input type="text" placeholder="Enter First & Last Name" name="auth_name"> </p>-->
+<!--         <p> Author Email: <input type="text" placeholder="Enter Email" name="auth_email"> </p>-->
+    
+<!-- keep track of last cookware ID in system and increment -->
+        <p> Cookware Name: <input type="text" placeholder="Name of cookware" name="cookware_name"> </p>
+        <p> Check here if the cookware is electric: <input type="radio" name="is_electric"> </p>
+
+<!-- keep track of last cuisine ID in system and increment -->
+        <p> Region of origin: <input type="text" placeholder="Name of Region" name="region_name"> </p>
+    
+<!-- keep track of last dish ID in system and increment -->
+        <p> Dish Name: <input type="text" placeholder="Name of Dish" name="dish_name"> </p>
+        <p> Instructions: <input type="text" placeholder="Description" name="instructions"> </p>
+        <p> Estimated prep time: <input type="text" placeholder="Prep Time in Minutes" name="prep_time"> </p>
+        <p> Check here if this dish is spicy: <input type="radio" name="is_spicy"> </p>
+        <p> Portion size: <input type="text" placeholder="Serving Size Number" name="portion"> </p>
+        
+        <input class="btn btn-default" type="submit" value="Add New Recipe">
+        
+    </form>
+    </body>
+{% endblock %}
