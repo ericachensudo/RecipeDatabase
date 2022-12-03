@@ -359,6 +359,7 @@ def view_auth(auth_id=None):
   infos['auth_id'] = auth_id
   infos['auth_name'] = result['auth_name']
   infos['auth_email'] = result['auth_email']
+  infos['auth_bio'] = result['bio']
   cursor = g.conn.execute("SELECT R.dish_id, R.dish_name FROM Author A, Writes W, Recipe R WHERE A.auth_id=W.auth_id AND W.dish_id=R.dish_id AND A.auth_id=%s", auth_id)
   dishes = []
   for result in cursor:
@@ -589,6 +590,9 @@ def recs_page():
     return render_template("recs.html", **dish, **user_info)
   elif request.method == 'GET':
     return render_template('recs.html', **user_info)
+
+
+# -----------------------------------------------------------------------------------------------
 
 # -----------------------------------------------------------------------------------------------
 @app.route('/auth_login', methods=['POST'])
