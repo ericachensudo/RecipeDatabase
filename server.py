@@ -592,35 +592,82 @@ def recs_page():
     return render_template('recs.html', **user_info)
 
 # -----------------------------------------------------------------------------------------------
+def getUserInfo(user_id):
+    cursor = g.conn.execute('SELECT * FROM Users U WHERE U.user_id=%s', (user_id))
+    result = cursor.fetchone()
+    user_info = dict()
+    user_info['name'] = result['user_name']
+    user_info['email'] = result['user_email']
+
+    cursor = g.conn.execute('SELECT (pref).calorie FROM Users U WHERE U.user_id=%s', (user_id))
+    result = cursor.fetchone()
+    user_info['calorie'] = result['calorie']
+
+    cursor = g.conn.execute('SELECT (pref).spicy FROM Users U WHERE U.user_id=%s', (user_id))
+    result = cursor.fetchone()
+    user_info['spicy'] = result['spicy']
+
+    cursor = g.conn.execute('SELECT (pref).prep_time FROM Users U WHERE U.user_id=%s', (user_id))
+    result = cursor.fetchone()
+    user_info['prep_time'] = result['prep_time']
+    return user_info  
+
 
 @app.route('/user_profile', methods=['GET','POST'])
 def user_profile():
   global user
   if request.method=='GET':
-    cursor = g.conn.execute('SELECT * FROM Users U WHERE U.user_id=%s', (user['id']))
-    result = cursor.fetchone()
-    print(result)
-    user_info = dict()
-    user_info['name'] = result['user_name']
-    user_info['email'] = result['user_email']
+    user_pref = getUserInfo(user['id'])
+    cursor = g.conn.execute('SELECT R.dish_id, R.dish_name FROM Recipe R, Contains C, Ingredients I WHERE R.dish_id=C.dish_id AND C.ingredient_id=I.ingredient_id GROUP BY R.dish_id HAVING SUM(I.calorie*C.quantity)< %s INTERSECT SELECT dish_id, dish_name FROM Recipe WHERE is_spicy = %s INTERSECT (SELECT dish_id, dish_name FROM Recipe WHERE prep_time < %s ORDER BY prep_time DESC)', (user_pref['calorie'], user_pref['spicy'], user_pref['prep_time']))  
+    dishes = []
+    dish_ids = []
+    for result in cursor:
+      temp = dict()
+      temp['dish_id'] = result['dish_id']
+      temp['dish_name'] = result['dish_name']
+      dish_ids.append(result['dish_id'])
+      dishes.append(temp)
+    cursor.close()
+    if len(dishes)>=5:
+      dishes = dishes[:5]
+    else:
+      cursor = g.conn.execute('SELECT R.dish_id, R.dish_name FROM Recipe r, Likes l GROUP BY R.dish_id ORDER BY COUNT(L.dish_id) DESC')
+      for result in cursor:
+        if len(dishes)==5:
+          break
+        if result['dish_id'] in dish_ids:
+          pass
+        else:
+          temp = dict()
+          temp['dish_id'] = result['dish_id']
+          temp['dish_name'] = result['dish_name']
+          dishes.append(temp)
+      cursor.close()
+    fav_dish = dict(fav_dish = dishes)
+    # cursor = g.conn.execute('SELECT * FROM Users U WHERE U.user_id=%s', (user['id']))
+    # result = cursor.fetchone()
+    # user_info = dict()
+    # user_info['name'] = result['user_name']
+    # user_info['email'] = result['user_email']
 
-    cursor = g.conn.execute('SELECT (pref).calorie FROM Users U WHERE U.user_id=%s', (user['id']))
-    result = cursor.fetchone()
-    user_info['calorie'] = result['calorie']
+    # cursor = g.conn.execute('SELECT (pref).calorie FROM Users U WHERE U.user_id=%s', (user['id']))
+    # result = cursor.fetchone()
+    # user_info['calorie'] = result['calorie']
 
-    cursor = g.conn.execute('SELECT (pref).spicy FROM Users U WHERE U.user_id=%s', (user['id']))
-    result = cursor.fetchone()
-    user_info['spicy'] = result['spicy']
+    # cursor = g.conn.execute('SELECT (pref).spicy FROM Users U WHERE U.user_id=%s', (user['id']))
+    # result = cursor.fetchone()
+    # user_info['spicy'] = result['spicy']
 
-    cursor = g.conn.execute('SELECT (pref).prep_time FROM Users U WHERE U.user_id=%s', (user['id']))
-    result = cursor.fetchone()
-    user_info['prep_time'] = result['prep_time']
+    # cursor = g.conn.execute('SELECT (pref).prep_time FROM Users U WHERE U.user_id=%s', (user['id']))
+    # result = cursor.fetchone()
+    # user_info['prep_time'] = result['prep_time']
 
     #user_info['spicy'] = result['pref'][1]
     #user_info['prep_time'] = result['pref'][2]
-    user_profile = dict(user_profile=user_info)
+    user_infos=getUserInfo(user['id'])
+    user_profile = dict(user_profile=user_infos)
     user_info = dict(user_info=user)
-    return render_template('user_profile.html', **user_info, **user_profile)
+    return render_template('user_profile.html', **user_info, **user_profile, **fav_dish)
   elif request.method=='POST':
     calorie_limit = request.form['calorie']
     spicy = request.form['spicy']
