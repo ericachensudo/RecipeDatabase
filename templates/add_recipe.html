@@ -10,7 +10,12 @@
 <!-- keep track of last author ID in system and increment -->
 <!--         <p> Author Name: <input type="text" placeholder="Enter First & Last Name" name="auth_name"> </p>-->
 <!--         <p> Author Email: <input type="text" placeholder="Enter Email" name="auth_email"> </p>-->
-    
+
+<!-- keep track of the quantity of ingredients -->
+        <p>Ingredients</p>
+        {% for n in ingreds %} 
+        <div>{{n.name}} {{n.id}}</div> <input type="text" placeholder="quantity" name="{{n.id}}"> (units)
+        {% endfor %}
 <!-- keep track of last cookware ID in system and increment -->
         <p> Cookware Name: <input type="text" placeholder="Name of cookware" name="cookware_name"> </p>
         <p> Check here if the cookware is electric: <input type="radio" name="is_electric"> </p>

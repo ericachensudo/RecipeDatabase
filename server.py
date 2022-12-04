@@ -26,7 +26,7 @@ keyword=""
 user = {'id': "guest0", "name": "Guest", 'user_type': "a"}
 modes = {'search': False}
 #ingre_count=1
-ingred = ['start']
+ingred = []
 db_did=11
 
 # The following is a dummy URI that does not connect to a valid database. You will need to modify it to connect to your Part 2 database in order to use the data.
@@ -591,9 +591,48 @@ def recs_page():
   elif request.method == 'GET':
     return render_template('recs.html', **user_info)
 
-
 # -----------------------------------------------------------------------------------------------
 
+@app.route('/user_profile', methods=['GET','POST'])
+def user_profile():
+  global user
+  if request.method=='GET':
+    cursor = g.conn.execute('SELECT * FROM Users U WHERE U.user_id=%s', (user['id']))
+    result = cursor.fetchone()
+    print(result)
+    user_info = dict()
+    user_info['name'] = result['user_name']
+    user_info['email'] = result['user_email']
+
+    cursor = g.conn.execute('SELECT (pref).calorie FROM Users U WHERE U.user_id=%s', (user['id']))
+    result = cursor.fetchone()
+    user_info['calorie'] = result['calorie']
+
+    cursor = g.conn.execute('SELECT (pref).spicy FROM Users U WHERE U.user_id=%s', (user['id']))
+    result = cursor.fetchone()
+    user_info['spicy'] = result['spicy']
+
+    cursor = g.conn.execute('SELECT (pref).prep_time FROM Users U WHERE U.user_id=%s', (user['id']))
+    result = cursor.fetchone()
+    user_info['prep_time'] = result['prep_time']
+
+    #user_info['spicy'] = result['pref'][1]
+    #user_info['prep_time'] = result['pref'][2]
+    user_profile = dict(user_profile=user_info)
+    user_info = dict(user_info=user)
+    return render_template('user_profile.html', **user_info, **user_profile)
+  elif request.method=='POST':
+    calorie_limit = request.form['calorie']
+    spicy = request.form['spicy']
+    prep_time = request.form['prep_time']
+    g.conn.execute('UPDATE Users u SET pref = (%s,%s,%s) WHERE u.user_id = %s;', (calorie_limit, spicy, prep_time, user['id']))
+    return redirect('/user_profile')
+
+
+
+
+# -----------------------------------------------------------------------------------------------
+# -----------------------------------------------------------------------------------------------
 # -----------------------------------------------------------------------------------------------
 @app.route('/auth_login', methods=['POST'])
 def auth_login():
@@ -644,18 +683,18 @@ def next_ingred():
 
 @app.route('/add_ingredient', methods=['POST', 'GET'])
 def add_ingredient():
-  global user, ingre_count
+  global user, ingre_count, ingred
   user_info = dict(user_info=user)
-  if request.method == 'POST':
-    ingre_count = int(request.form["ingre_count"])
-    ingre = []
-    ingre_id=1
-    for i in range(ingre_count):
-      ingre.append(str(ingre_id))
-      ingre_id+=1
-    ingreds = dict(ingred=ingre)
-    return render_template('add_ingredient.html', **ingreds,**user_info)
-  elif  request.method == 'GET':
+  # if request.method == 'POST':
+  #   ingre_count = int(request.form["ingre_count"])
+  #   ingre = []
+  #   ingre_id=1
+  #   for i in range(ingre_count):
+  #     ingre.append(str(ingre_id))
+  #     ingre_id+=1
+  #   ingreds = dict(ingred=ingre)
+  #   return render_template('add_ingredient.html', **ingreds,**user_info)
+  if  request.method == 'GET':
     cursor = g.conn.execute('select * from ingredients')
     db_ingred = []
     for result in cursor:
@@ -702,7 +741,7 @@ def enter_ingredient():
 def add_recipe():
   global user, ingred, db_did
   user_info = dict(user_info=user)
-  ingreds = dict(ingred=ingred)
+  ingreds = dict(ingreds=ingred)
   if request.method == 'POST':
     print(request.form)
     #ingredient_id = g.conn.execute('SELECT MAX(ASCII(ingredient_id)) FROM Ingredients')

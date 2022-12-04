@@ -1,0 +1,21 @@
+{% extends "layout.html" %}
+
+{% block content %}
+
+<body>
+  <h2>User Name: {{user_profile.name}}</h2>
+  <h2>User Email: {{user_profile.email}}</h2>
+  <form method="POST" action="/user_profile">
+    <h2>Calorie Limit: {{user_profile.calorie}}</h2>
+    <input type="text" name="calorie" value="{{user_profile.calorie}}"> 
+    <h2>Spicy or not: {{user_profile.spicy}}</h2>
+    <input type="text" name="spicy" value="{{user_profile.spicy}}"> 
+    <h2>Prep Time Limit: {{user_profile.prep_time}}</h2>
+    <input type="text" name="prep_time" value="{{user_profile.prep_time}}"> 
+    <input type="submit" value="Submit">
+  </form>
+  
+  
+</body>
+
+{% endblock %}
