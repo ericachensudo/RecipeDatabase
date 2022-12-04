@@ -398,6 +398,7 @@ def view_auth(auth_id=None):
 @app.route('/login', methods=['POST'])
 def login():
   global user
+  user['user_type'] = 'u'
   userid = request.form['id']
   pswd = request.form['pswd']
   cursor = g.conn.execute("SELECT * FROM Users WHERE user_id=%s AND user_password=%s", userid, pswd)
@@ -691,33 +692,36 @@ def user_profile():
 # -----------------------------------------------------------------------------------------------
 # -----------------------------------------------------------------------------------------------
 # -----------------------------------------------------------------------------------------------
-@app.route('/auth_login', methods=['POST'])
-def auth_login():
+@app.route('/admin_login', methods=['POST'])
+def admin_login():
   global user
-  auth_email = request.form['email']
+  admin_id = request.form['admin_id']
   pswd = request.form['pswd']
-  cursor = g.conn.execute("SELECT * FROM Author WHERE auth_email='"+auth_email+"' AND auth_password=%s",(pswd))
-  content = cursor.fetchone()
-  if content:
-    user['id'] = content['auth_id']
-    user['name'] = content['auth_name']
+  if admin_id=="database" and pswd=="cs4111":
     user['user_type'] = 'a'
-    user['email'] = content['auth_email']
-    #return redirect("/collection/"+author['id'])
-    return redirect("home")
+    return redirect('home')
+  #cursor = g.conn.execute("SELECT * FROM Author WHERE auth_email='"+auth_email+"' AND auth_password=%s",(pswd))
+  #content = cursor.fetchone()
+  # if content:
+  #   user['id'] = content['auth_id']
+  #   user['name'] = content['auth_name']
+  #   user['user_type'] = 'a'
+  #   user['email'] = content['auth_email']
+  #   #return redirect("/collection/"+author['id'])
+  #   return redirect("home")
   else:
     error_msg = "Incorrect author email and password combination."
     error = dict(error=error_msg)
     return render_template("login.html", **error)
 
-@app.route('/auth_login_page')
-def auth_login_page():
+@app.route('/admin_login_page')
+def admin_login_page():
   #login_type = "Author"
   #login_link = "/auth_login"
   #login_info = {"login_type": login_type, "login_link": login_link}
   #login = dict(login=login_info)
   #return render_template("auth_login.html", **login)
-  return render_template("auth_login.html")
+  return render_template("admin_login.html")
 
 # -----------------------------------------------------------------------------------------------
 @app.route('/next_ingred', methods=['POST', 'GET'])

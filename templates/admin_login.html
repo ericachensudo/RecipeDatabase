@@ -12,10 +12,10 @@
     </head><body>
         
         <div class="container">
-            <h1>Author login</h1>
+            <h1>Admin Access</h1>
             <br>
-            <form method="POST" action="/auth_login">
-              <input type="text" placeholder="Author ID" name="email">
+            <form method="POST" action="/admin_login">
+              <input type="text" placeholder="Admin ID" name="admin_id">
               <input type="pswd" placeholder="Password" name="pswd">
               <input class="btn btn-default" type="submit" value="Login">
             </form>
@@ -24,6 +24,5 @@
             {% endif %}
         </div>
         <p><a href="/"> Switch to User Login</a></p>
-        <p><a href="signup_page"> Register an account with us!</a></p>
 
 </body></html>
