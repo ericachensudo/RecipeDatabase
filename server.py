@@ -279,9 +279,11 @@ def view(id=None):
   images = []
   cursor = g.conn.execute('SELECT image FROM Recipe WHERE dish_id=%s',(infos['dish_id']))
   result = cursor.fetchone()
-  for pic in enumerate(result):
-    images.append(pic)
+  #for pic in enumerate(result):
+  #  images.append(pic)
+  images = result[0]
   cursor.close()
+
 # ----------------
 
   cursor = g.conn.execute('select count(dish_id) from likes where dish_id=%s',(infos['dish_id']))
@@ -655,26 +657,7 @@ def user_profile():
           dishes.append(temp)
       cursor.close()
     fav_dish = dict(fav_dish = dishes)
-    # cursor = g.conn.execute('SELECT * FROM Users U WHERE U.user_id=%s', (user['id']))
-    # result = cursor.fetchone()
-    # user_info = dict()
-    # user_info['name'] = result['user_name']
-    # user_info['email'] = result['user_email']
 
-    # cursor = g.conn.execute('SELECT (pref).calorie FROM Users U WHERE U.user_id=%s', (user['id']))
-    # result = cursor.fetchone()
-    # user_info['calorie'] = result['calorie']
-
-    # cursor = g.conn.execute('SELECT (pref).spicy FROM Users U WHERE U.user_id=%s', (user['id']))
-    # result = cursor.fetchone()
-    # user_info['spicy'] = result['spicy']
-
-    # cursor = g.conn.execute('SELECT (pref).prep_time FROM Users U WHERE U.user_id=%s', (user['id']))
-    # result = cursor.fetchone()
-    # user_info['prep_time'] = result['prep_time']
-
-    #user_info['spicy'] = result['pref'][1]
-    #user_info['prep_time'] = result['pref'][2]
     user_infos=getUserInfo(user['id'])
     user_profile = dict(user_profile=user_infos)
     user_info = dict(user_info=user)
@@ -686,191 +669,7 @@ def user_profile():
     g.conn.execute('UPDATE Users u SET pref = (%s,%s,%s) WHERE u.user_id = %s;', (calorie_limit, spicy, prep_time, user['id']))
     return redirect('/user_profile')
 
-
-
-
 # -----------------------------------------------------------------------------------------------
-# -----------------------------------------------------------------------------------------------
-# -----------------------------------------------------------------------------------------------
-@app.route('/admin_login', methods=['POST'])
-def admin_login():
-  global user
-  admin_id = request.form['admin_id']
-  pswd = request.form['pswd']
-  if admin_id=="database" and pswd=="cs4111":
-    user['user_type'] = 'a'
-    return redirect('home')
-  #cursor = g.conn.execute("SELECT * FROM Author WHERE auth_email='"+auth_email+"' AND auth_password=%s",(pswd))
-  #content = cursor.fetchone()
-  # if content:
-  #   user['id'] = content['auth_id']
-  #   user['name'] = content['auth_name']
-  #   user['user_type'] = 'a'
-  #   user['email'] = content['auth_email']
-  #   #return redirect("/collection/"+author['id'])
-  #   return redirect("home")
-  else:
-    error_msg = "Incorrect author email and password combination."
-    error = dict(error=error_msg)
-    return render_template("login.html", **error)
-
-@app.route('/admin_login_page')
-def admin_login_page():
-  #login_type = "Author"
-  #login_link = "/auth_login"
-  #login_info = {"login_type": login_type, "login_link": login_link}
-  #login = dict(login=login_info)
-  #return render_template("auth_login.html", **login)
-  return render_template("admin_login.html")
-
-# -----------------------------------------------------------------------------------------------
-@app.route('/add_ingredient', methods=['POST', 'GET'])
-def add_ingredient():
-  global user, ingre_count, ingred
-  user_info = dict(user_info=user)
-  # if request.method == 'POST':
-  #   ingre_count = int(request.form["ingre_count"])
-  #   ingre = []
-  #   ingre_id=1
-  #   for i in range(ingre_count):
-  #     ingre.append(str(ingre_id))
-  #     ingre_id+=1
-  #   ingreds = dict(ingred=ingre)
-  #   return render_template('add_ingredient.html', **ingreds,**user_info)
-  if  request.method == 'GET':
-    cursor = g.conn.execute('select * from ingredients')
-    db_ingred = []
-    for result in cursor:
-      temp = dict()
-      temp['ingredient_id']=result['ingredient_id']
-      temp['ingredient_name']=result['ingredient_name']
-      db_ingred.append(temp)
-    cursor.close()
-    db_ingreds = dict(db_ingreds=db_ingred)
-    ingreds = dict(ingreds=ingred)
-    return render_template("add_ingredient.html", **user_info, **db_ingreds, **ingreds)
-
-@app.route('/next_ingred', methods=['POST', 'GET'])
-def next_ingred():
-  global user, ingred
-  user_info = dict(user_info=user)
-  if request.method=='POST':
-    #print(request.form)
-    temp = dict()
-    temp['id'] = request.form['ingredient_info'].split('_')[0]
-    temp['name'] = request.form['ingredient_info'].split('_')[1]
-    ingred.append(temp)
-    ingreds = dict(ingreds=ingred)
-    return redirect("add_ingredient")
-  elif request.method=='GET':
-    return render_template('add_ingredient.html', **ingreds,**user_info)
-
-@app.route('/enter_ingredient', methods=['POST', 'GET'])
-def enter_ingredient():
-  #print(request.form)
-  global user, ingred, ingre_count
-  user_info = dict(user_info=user)
-  cursor = g.conn.execute('select ingredient_id from ingredients where ingredient_id=(select max(ingredient_id) from ingredients)')
-  result = cursor.fetchone()
-  current_id = int(result['ingredient_id'].split("i")[1])
-
-  if request.method == 'POST':
-    current_id += 1
-    ingredient_id = 'i'+str(current_id)
-    ingredient_name = request.form['ingredient_name']
-    temp = dict()
-    temp['id'] = ingredient_id
-    temp['name'] = ingredient_name
-    ingred.append(temp)
-    protein = request.form['protein']
-    carb = request.form['carb']
-    fat = request.form['fat']
-    calorie = request.form['calorie']
-    unit = request.form['units']
-    g.conn.execute('INSERT INTO Ingredients(ingredient_id, ingredient_name, protein, carb, fat, calorie, unit) VALUES (%s, %s, %s, %s, %s, %s, %s)', (ingredient_id, ingredient_name, protein, carb, fat, calorie, unit))
-    return redirect("add_ingredient")
-      #if g.conn.execute('SELECT %s FROM Ingredients', ingredient_name) == False:
-      #  g.conn.execute('INSERT INTO Ingredients(ingredient_id, ingredient_name, protein, carb, fat, calorie, units) VALUES (%s, %s, %d, %d, %d, %d, %s)', (ingredient_id, ingredient_name, protein, carb, fat, calorie, units))
-  elif  request.method == 'GET':
-    return render_template("add_ingredient.html", **user_info)
-
-# -----------------------------------------------------------------------------------------------
-
-@app.route('/add_recipe', methods=['POST', 'GET'])
-def add_recipe():
-  global user, ingred, db_did
-  user_info = dict(user_info=user)
-  ingreds = dict(ingreds=ingred)
-  if request.method == 'POST':
-    for i in ingred:
-      i['quantity'] = request.form[i['id']+'_quantity']
-    auth_id = request.form['author'].split('_')[0]
-    cookware_id = request.form['cookware'].split('_')[0]
-    cuisine_id = request.form['cuisine'].split('_')[0]
-    # cookware_name = request.form['cookware_name']
-    # region_name = request.form['region_name']
-    dish_name = request.form['dish_name']
-    instructions = request.form['instructions']
-    prep_time = request.form['prep_time']
-    is_spicy = 'is_spicy' in request.form
-    is_electric = 'is_electric' in request.form
-
-    #cursor = g.conn.execute('select dish_id from recipe where dish_id=(select max(dish_id) from recipe)')
-    #result = cursor.fetchone()
-    #dish_id = 'd'+str(int(result['dish_id'].split("d")[1])+1)
-    #dish_id = 'd'+str(db_did)
-    
-    dish_id = 'd91'
-    g.conn.execute('INSERT INTO Recipe Values (%s,%s,%s,%s,%s);', (dish_id, dish_name, instructions, prep_time, is_spicy))
-    
-    for item in ingred:
-      g.conn.execute('INSERT INTO Contains(dish_id, ingredient_id, quantity) VALUES (%s, %s, %s)', (dish_id, item['id'], item['quantity']))
-
-    g.conn.execute('INSERT INTO Type_Of(dish_id, cuisine_id) VALUES (%s, %s)', (dish_id, cuisine_id))
-
-    g.conn.execute('INSERT INTO Utilizes(dish_id, cookware_id) VALUES (%s, %s)', (dish_id, cookware_id))
-
-    g.conn.execute('INSERT INTO Writes(auth_id, dish_id) VALUES (%s, %s)', (auth_id, dish_id))
-
-    #return render_template('add_recipe.html', **ingreds,**user_info)
-    return redirect('home')
-
-  elif  request.method == 'GET':
-    #dropdown for author
-    cursor = g.conn.execute('select * from author')
-    db_authors = []
-    for result in cursor:
-      temp = dict()
-      temp['author_id']=result['auth_id']
-      temp['author_name']=result['auth_name']
-      db_authors.append(temp)
-    cursor.close()
-    db_author = dict(db_author=db_authors)
-
-    #dropdown for cookware
-    cursor = g.conn.execute('select * from cookware')
-    db_cookwares = []
-    for result in cursor:
-      temp = dict()
-      temp['cookware_id']=result['cookware_id']
-      temp['cookware_name']=result['cookware_name']
-      db_cookwares.append(temp)
-    cursor.close()
-    db_cookware = dict(db_cookware=db_cookwares)
-
-    #dropdown for cuisine
-    cursor = g.conn.execute('select * from cuisine')
-    db_cuisines = []
-    for result in cursor:
-      temp = dict()
-      temp['cuisine_id']=result['cuisine_id']
-      temp['cuisine_name']=result['region_name']
-      db_cuisines.append(temp)
-    cursor.close()
-    db_cuisine = dict(db_cuisine=db_cuisines)
-
-    return render_template('add_recipe.html', **ingreds, **user_info, **db_author, **db_cookware, **db_cuisine)
-
 # -----------------------------------------------------------------------------------------------
 
 if __name__ == "__main__":
