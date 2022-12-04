@@ -714,24 +714,6 @@ def admin_login_page():
   return render_template("admin_login.html")
 
 # -----------------------------------------------------------------------------------------------
-@app.route('/next_ingred', methods=['POST', 'GET'])
-def next_ingred():
-  global user, ingred
-  user_info = dict(user_info=user)
-  if request.method=='POST':
-    #print(request.form)
-    temp = dict()
-    temp['id'] = request.form['ingredient_info'].split('_')[0]
-    temp['name'] = request.form['ingredient_info'].split('_')[1]
-    ingred.append(temp)
-    ingreds = dict(ingreds=ingred)
-    return redirect("add_ingredient")
-  elif request.method=='GET':
-    return render_template('add_ingredient.html', **ingreds,**user_info)
-
-
-
-
 @app.route('/add_ingredient', methods=['POST', 'GET'])
 def add_ingredient():
   global user, ingre_count, ingred
@@ -753,9 +735,25 @@ def add_ingredient():
       temp['ingredient_id']=result['ingredient_id']
       temp['ingredient_name']=result['ingredient_name']
       db_ingred.append(temp)
+    cursor.close()
     db_ingreds = dict(db_ingreds=db_ingred)
     ingreds = dict(ingreds=ingred)
     return render_template("add_ingredient.html", **user_info, **db_ingreds, **ingreds)
+
+@app.route('/next_ingred', methods=['POST', 'GET'])
+def next_ingred():
+  global user, ingred
+  user_info = dict(user_info=user)
+  if request.method=='POST':
+    #print(request.form)
+    temp = dict()
+    temp['id'] = request.form['ingredient_info'].split('_')[0]
+    temp['name'] = request.form['ingredient_info'].split('_')[1]
+    ingred.append(temp)
+    ingreds = dict(ingreds=ingred)
+    return redirect("add_ingredient")
+  elif request.method=='GET':
+    return render_template('add_ingredient.html', **ingreds,**user_info)
 
 @app.route('/enter_ingredient', methods=['POST', 'GET'])
 def enter_ingredient():
@@ -794,73 +792,74 @@ def add_recipe():
   user_info = dict(user_info=user)
   ingreds = dict(ingreds=ingred)
   if request.method == 'POST':
-    print(request.form)
-    #ingredient_id = g.conn.execute('SELECT MAX(ASCII(ingredient_id)) FROM Ingredients')
-    #auth_name = request.form['auth_name']
-    #auth_email = request.form['auth_email']
-    auth_id = user['id']
-    cookware_name = request.form['cookware_name']
-    region_name = request.form['region_name']
+    for i in ingred:
+      i['quantity'] = request.form[i['id']+'_quantity']
+    auth_id = request.form['author'].split('_')[0]
+    cookware_id = request.form['cookware'].split('_')[0]
+    cuisine_id = request.form['cuisine'].split('_')[0]
+    # cookware_name = request.form['cookware_name']
+    # region_name = request.form['region_name']
+    dish_name = request.form['dish_name']
     instructions = request.form['instructions']
     prep_time = request.form['prep_time']
-    is_spicy = request.form['is_spicy']=='on'
+    is_spicy = 'is_spicy' in request.form
+    is_electric = 'is_electric' in request.form
 
     #cursor = g.conn.execute('select dish_id from recipe where dish_id=(select max(dish_id) from recipe)')
     #result = cursor.fetchone()
     #dish_id = 'd'+str(int(result['dish_id'].split("d")[1])+1)
-    dish_id = 'd'+str(db_did)
-    dish_name = request.form['dish_name']
-
-    print('INSERT INTO Recipe(dish_id, dish_name, instructions, prep_time, is_spicy) VALUES (%s, %s, %s, %s, %s, %s, %s)', (dish_id, dish_name, instructions, prep_time, is_spicy))
-
-    #if g.conn.execute('SELECT %s FROM Recipe', dish_name) == False:
-      #g.conn.execute('INSERT INTO Recipe VALUES (%s, %s, %s, %d, %r)', (dish_id, dish_name, instructions, prep_time, is_spicy))
-
-    portion = request.form['portion']
-    #if g.conn.execute('SELECT (%s, %s, %d) FROM Contains', (dish_id, ingredient_id, portion)) == False:
-    #  g.conn.execute('INSERT INTO Contains(dish_id, ingredient_id, portion) VALUES (%s, %s, %d)', (dish_id, ingredient_id, portion))
-    for item in ingreds:
-      ingredient_id = item['id']
-      print('INSERT INTO Contains(dish_id, ingredient_id, portion) VALUES (%s, %s, %s)', (dish_id, ingredient_id, portion))
-
+    #dish_id = 'd'+str(db_did)
     
-    #if g.conn.execute('SELECT (%s, %s) FROM Cuisine', (cuisine_id, region_name)) == False:
-    #  g.conn.execute('INSERT INTO Cuisine(cuisine_id, region_name) VALUES (%s, %s)', (cuisine_id, region_name))
-    cuisine_id = 'c'+ str(db_did)
-    print('INSERT INTO Cuisine(cuisine_id, region_name) VALUES (%s, %s)', (cuisine_id, region_name))
-    print(('INSERT INTO Type_Of(dish_id, cuisine_id) VALUES (%s, %s)', (dish_id, cuisine_id)))
-
-    #cuisine_id = g.conn.execute('SELECT MAX(ASCII(cuisine_id)) FROM Type_Of')
-    #if g.conn.execute('SELECT (%s, %s) FROM Type_Of', (dish_id, cuisine_id)) == False:
-    #  g.conn.execute('INSERT INTO Type_Of(dish_id, cuisine_id) VALUES (%s, %s)', (dish_id, cuisine_id))
-    cookware_id = 'w5'
-    #cookware_name = request.form['cookware_name']
-    #is_electric = request.form['is_electric']=='on'
-
-    #if g.conn.execute('SELECT (%s, %s, %r) FROM Cookware', (cookware_id, cookware_name, is_electric)) == False:
-    #  g.conn.execute('INSERT INTO Cookware(cookware_id, cookware_name, is_electric) VALUES (%s, %s, %r)', (cookware_id, cookware_name, is_electric))
-
-    #print('INSERT INTO Cookware(cookware_id, cookware_name, is_electric) VALUES (%s, %s, %r)', (cookware_id, cookware_name, is_electric))
-
-    #cookware_id = g.conn.execute('SELECT MAX(ASCII(cookware_id)) FROM Utilizes')
-    #if g.conn.execute('SELECT (%s,%s) FROM Utilizes', (dish_id, cookware_id)) == False:
-    #  g.conn.execute('INSERT INTO Utilizes(dish_id, cookware_id) VALUES (%s, %s)', (dish_id, cookware_id))
-    print('INSERT INTO Utilizes(dish_id, cookware_id) VALUES (%s, %s)', (dish_id, cookware_id))
-
+    dish_id = 'd91'
+    g.conn.execute('INSERT INTO Recipe Values (%s,%s,%s,%s,%s);', (dish_id, dish_name, instructions, prep_time, is_spicy))
     
-    #cookware_id = g.conn.execute('SELECT MAX(ASCII(cookware_id)) FROM Utilizes')
-    #if g.conn.execute('SELECT (%s,%s,%s) FROM Author', (auth_id, auth_name, auth_email, auth_password)) == False:
-    #  g.conn.execute('INSERT INTO Author(auth_id, auth_name, auth_email, auth_password) VALUES (%s, %s, %s)', (auth_id, auth_name, auth_email))
+    for item in ingred:
+      g.conn.execute('INSERT INTO Contains(dish_id, ingredient_id, quantity) VALUES (%s, %s, %s)', (dish_id, item['id'], item['quantity']))
 
-    #auth_id = g.conn.execute('SELECT MAX(ASCII(auth_id)) FROM Writes')
-    #if g.conn.execute('SELECT (%s,%s) FROM Writes', (auth_id, dish_id)) == False:
-    #  g.conn.execute('INSERT INTO Writes(auth_id, dish_id) VALUES (%s, %s)', (auth_id, dish_id))
+    g.conn.execute('INSERT INTO Type_Of(dish_id, cuisine_id) VALUES (%s, %s)', (dish_id, cuisine_id))
 
-    print(('INSERT INTO Writes(auth_id, dish_id) VALUES (%s, %s)', (auth_id, dish_id)))
+    g.conn.execute('INSERT INTO Utilizes(dish_id, cookware_id) VALUES (%s, %s)', (dish_id, cookware_id))
 
-    return render_template('add_recipe.html', **ingreds,**user_info)
+    g.conn.execute('INSERT INTO Writes(auth_id, dish_id) VALUES (%s, %s)', (auth_id, dish_id))
+
+    #return render_template('add_recipe.html', **ingreds,**user_info)
+    return redirect('home')
+
   elif  request.method == 'GET':
-    return render_template('add_recipe.html', **ingreds,**user_info)
+    #dropdown for author
+    cursor = g.conn.execute('select * from author')
+    db_authors = []
+    for result in cursor:
+      temp = dict()
+      temp['author_id']=result['auth_id']
+      temp['author_name']=result['auth_name']
+      db_authors.append(temp)
+    cursor.close()
+    db_author = dict(db_author=db_authors)
+
+    #dropdown for cookware
+    cursor = g.conn.execute('select * from cookware')
+    db_cookwares = []
+    for result in cursor:
+      temp = dict()
+      temp['cookware_id']=result['cookware_id']
+      temp['cookware_name']=result['cookware_name']
+      db_cookwares.append(temp)
+    cursor.close()
+    db_cookware = dict(db_cookware=db_cookwares)
+
+    #dropdown for cuisine
+    cursor = g.conn.execute('select * from cuisine')
+    db_cuisines = []
+    for result in cursor:
+      temp = dict()
+      temp['cuisine_id']=result['cuisine_id']
+      temp['cuisine_name']=result['region_name']
+      db_cuisines.append(temp)
+    cursor.close()
+    db_cuisine = dict(db_cuisine=db_cuisines)
+
+    return render_template('add_recipe.html', **ingreds, **user_info, **db_author, **db_cookware, **db_cuisine)
 
 # -----------------------------------------------------------------------------------------------
 

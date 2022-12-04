@@ -14,21 +14,38 @@
 <!-- keep track of the quantity of ingredients -->
         <p>Ingredients</p>
         {% for n in ingreds %} 
-        <div>{{n.name}} {{n.id}}</div> <input type="text" placeholder="quantity" name="{{n.id}}"> (units)
+        <div>{{n.name}} {{n.id}}</div> <input type="text" placeholder="quantity" name="{{n.id}}_quantity"> (units)
         {% endfor %}
+        <p>  </p>
+        Author
+        <select name="author">
+                {% for x in db_author %}
+                <option value="{{x.author_id}}_{{x.author_name}}">{{x.author_name}}</option>
+                {% endfor%}
+        </select>
 <!-- keep track of last cookware ID in system and increment -->
-        <p> Cookware Name: <input type="text" placeholder="Name of cookware" name="cookware_name"> </p>
+        Cookware
+        <select name="cookware">
+                {% for x in db_cookware %}
+                <option value="{{x.cookware_id}}_{{x.cookware_name}}">{{x.cookware_name}}</option>
+                {% endfor%}
+        </select>
         <p> Check here if the cookware is electric: <input type="radio" name="is_electric"> </p>
 
 <!-- keep track of last cuisine ID in system and increment -->
-        <p> Region of origin: <input type="text" placeholder="Name of Region" name="region_name"> </p>
+        Region
+        <select name="cuisine">
+                {% for x in db_cuisine %}
+                <option value="{{x.cuisine_id}}_{{x.cuisine_name}}">{{x.cuisine_name}}</option>
+                {% endfor%}
+        </select>
     
 <!-- keep track of last dish ID in system and increment -->
         <p> Dish Name: <input type="text" placeholder="Name of Dish" name="dish_name"> </p>
         <p> Instructions: <input type="text" placeholder="Description" name="instructions"> </p>
         <p> Estimated prep time: <input type="text" placeholder="Prep Time in Minutes" name="prep_time"> </p>
         <p> Check here if this dish is spicy: <input type="radio" name="is_spicy"> </p>
-        <p> Portion size: <input type="text" placeholder="Serving Size Number" name="portion"> </p>
+        
         
         <input class="btn btn-default" type="submit" value="Add New Recipe">
         
