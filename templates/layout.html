@@ -70,10 +70,9 @@
   <a class="logo" href="/home"><h1>Recipe Book</h1></a>
   <div >
     <a class="nav_bar" href="/home">Home</a>
+    {% if user_info.user_type=='a' %}
     <a class="nav_bar" href="/add_ingredient">Add Recipe</a>
-    <!--{% if user_info.user_type=='a' %} -->
-    <a class="nav_bar" href="/add_ingredient">Add Recipe</a>
-    <!--{% endif %}-->
+    {% endif %}
     <a class="nav_bar" href="/leaderboard">Chef Leaderboard</a>
     <a class="nav_bar" href="/recs_page">Recommend</a>
     <a class="nav_bar" href="/tocollection">My Collection</a>
