@@ -275,6 +275,15 @@ def view(id=None):
   infos['instruction'] = content['instructions']
   cursor.close()
 
+# ---------------- print every picture in array
+  images = []
+  cursor = g.conn.execute('SELECT image FROM Recipe WHERE dish_id=%s',(infos['dish_id']))
+  result = cursor.fetchone()
+  for pic in enumerate(result):
+    images.append(pic)
+  cursor.close()
+# ----------------
+
   cursor = g.conn.execute('select count(dish_id) from likes where dish_id=%s',(infos['dish_id']))
   content = cursor.fetchone()
   infos['likes'] = content[0]
@@ -346,8 +355,9 @@ def view(id=None):
   cursor.close()
   info = dict(info=infos)
   ingredient = dict(ingredient = ingredients)
+  image = dict(image = images)
 
-  return render_template('view.html',**info,**ingredient, **user_info)
+  return render_template('view.html',**info,**ingredient, **image, **user_info)
 
 @app.route('/view_auth/<auth_id>')
 def view_auth(auth_id=None):

@@ -38,20 +38,22 @@
     {% endif %}
   {% endif %}
   
-  <div class="row">
-    <div class="column">
-      <img src="../static/img/child.jpeg" alt="Picture" style='width:100%'>
-    </div>
-    <div class="column">
-      <img src="../static/img/child.jpeg" alt="Picture" style='width:100%'>
-    </div>
-    <div class="column">
-      <img src="../static/img/child.jpeg" alt="Picture" style='width:100%'>
-    </div>
-    <div class="column">
-      <img src="../static/img/child.jpeg" alt="Picture" style='width:100%'>
-    </div>
-  </div>
+
+<!-- ---------------- print every picture in array -->
+  <h3>Images</h3>
+  <ul class="image_list">
+    <!-- [noodle.jpeg, soysauce.jpeg, soybeannoodle.jpeg] -->
+    {% for name in image %}
+      <div class="row">
+        <div class="column">
+          <img src="../static/img/{{ name }}" alt="Picture" style='width:100%'>
+        </div>
+      </div>
+    {% endfor %}
+  </ul>
+<!-- ---------------- -->
+
+
   <h3>Prep Time: {{info.prep_time}} min</h3>
   <h3>Spicy: {{info.spicy}}, Cookware: {{info.cookware}}({{info.electric}})</h3>
 
