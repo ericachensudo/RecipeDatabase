@@ -136,11 +136,24 @@ def home():
     temp['dish_name'] = result['dish_name']
     dishes.append(temp)
   cursor.close()
+
+  images = []
+  cursor = g.conn.execute('SELECT R.dish_id, R.image[1] FROM Recipe r, Likes l WHERE r.dish_id=l.dish_id GROUP BY R.dish_id LIMIT 4')
+  
+  for result in cursor:
+    temp = dict()
+    temp['dish_id'] = result['dish_id']
+    temp['image'] = result['image']
+    images.append(temp)
+  #images = result['image']
+  cursor.close()
+
   dish = dict(dish = dishes)
   user_info = dict(user_info=user)
-  mode = dict(mode=modes)  
+  mode = dict(mode=modes)
+  image = dict(image=images)  
 
-  return render_template("home.html", **dish, **user_info, **mode)
+  return render_template("home.html", **dish, **user_info, **mode, **image)
 
 # -----------------------------------------------------------------------------------------------
 @app.route('/leaderboard')
