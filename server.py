@@ -23,7 +23,7 @@ global keyword, user, modes
 #global ingre_count
 global ingred, db_did
 keyword=""
-user = {'id': "guest0", "name": "Guest", 'user_type': "a", 'profile_edit': False}
+user = {'id': "guest0", "name": "Guest", 'user_type': "u", 'profile_edit': False}
 modes = {'search': False}
 #ingre_count=1
 ingred = []
@@ -138,7 +138,7 @@ def home():
   cursor.close()
 
   images = []
-  cursor = g.conn.execute('SELECT R.dish_id, R.image[1] FROM Recipe r, Likes l WHERE r.dish_id=l.dish_id GROUP BY R.dish_id LIMIT 4')
+  cursor = g.conn.execute('SELECT R.dish_id, R.image[1] FROM Recipe r, Likes l WHERE r.dish_id=l.dish_id GROUP BY R.dish_id ORDER BY COUNT(*) DESC LIMIT 4')
   
   for result in cursor:
     temp = dict()
