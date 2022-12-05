@@ -21,6 +21,18 @@
 
 
   <p>Recipe of the Week</p>
+  <ul class="image_list">
+    <!-- [noodle.jpeg, soysauce.jpeg, soybeannoodle.jpeg] -->
+    
+      <div class="row">
+        {% for x in image %}
+        <div class="column">
+          <a href="/view/{{x.dish_id}}"><img class='tab'src="../static/img/{{ x.image }}" alt="Picture" style='width:100%; height: 230px'></a>
+        </div>
+        {% endfor %}
+      </div>
+    
+  </ul>
   <ul class="recipe_list">
     {% for n in dish %}
       {% if n.dish_id == "d0" %}

@@ -23,7 +23,7 @@ global keyword, user, modes
 #global ingre_count
 global ingred, db_did
 keyword=""
-user = {'id': "guest0", "name": "Guest", 'user_type': "a"}
+user = {'id': "guest0", "name": "Guest", 'user_type': "u", 'profile_edit': False}
 modes = {'search': False}
 #ingre_count=1
 ingred = []
@@ -136,11 +136,24 @@ def home():
     temp['dish_name'] = result['dish_name']
     dishes.append(temp)
   cursor.close()
+
+  images = []
+  cursor = g.conn.execute('SELECT R.dish_id, R.image[1] FROM Recipe r, Likes l WHERE r.dish_id=l.dish_id GROUP BY R.dish_id ORDER BY COUNT(*) DESC LIMIT 4')
+  
+  for result in cursor:
+    temp = dict()
+    temp['dish_id'] = result['dish_id']
+    temp['image'] = result['image']
+    images.append(temp)
+  #images = result['image']
+  cursor.close()
+
   dish = dict(dish = dishes)
   user_info = dict(user_info=user)
-  mode = dict(mode=modes)  
+  mode = dict(mode=modes)
+  image = dict(image=images)  
 
-  return render_template("home.html", **dish, **user_info, **mode)
+  return render_template("home.html", **dish, **user_info, **mode, **image)
 
 # -----------------------------------------------------------------------------------------------
 @app.route('/leaderboard')
@@ -664,12 +677,20 @@ def user_profile():
     return render_template('user_profile.html', **user_info, **user_profile, **fav_dish)
   elif request.method=='POST':
     calorie_limit = request.form['calorie']
-    spicy = request.form['spicy']
+    spicy = 'False'
+    if 'is_spicy' in request.form:
+      spicy = 'True'
     prep_time = request.form['prep_time']
     g.conn.execute('UPDATE Users u SET pref = (%s,%s,%s) WHERE u.user_id = %s;', (calorie_limit, spicy, prep_time, user['id']))
+    user['profile_edit']= False
     return redirect('/user_profile')
 
 # -----------------------------------------------------------------------------------------------
+@app.route('/edit_profile', methods=['POST'])
+def edit_profile():
+  global user
+  user['profile_edit']= True
+  return redirect('user_profile')
 # -----------------------------------------------------------------------------------------------
 
 if __name__ == "__main__":
